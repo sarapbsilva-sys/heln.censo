@@ -9,192 +9,184 @@ const API_URL =
     "https://script.google.com/macros/s/AKfycby9_rpR0MimTfGA_39teRD8J-vefPcSdxwOAsSf4VcFxZtgVpcAeLOV_z0kjO6Yq4g/exec";
 
 
-console.log("login.js carregado");
-console.log("Form:", loginForm);
-console.log("Usuário:", usuarioInput);
-console.log("Senha:", senhaInput);
-console.log("Botão:", btnLogin);
+console.log("LOGIN.JS CORRETO CARREGADO");
 
 
-/* =========================================
-   LOGIN
-========================================= */
+loginForm.addEventListener(
+    "submit",
+    async function (event) {
 
-loginForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
 
-    event.preventDefault();
+        console.log("Submit capturado");
 
-    console.log("Submit capturado");
+        const nome =
+            usuarioInput.value.trim();
 
-    const nome = usuarioInput.value.trim();
-    const senha = senhaInput.value.trim();
-
-    console.log("Tentando login:", nome);
-
-
-    if (!nome || !senha) {
-
-        mostrarMensagem(
-            "Informe usuário e senha.",
-            "error"
-        );
-
-        return;
-    }
+        const senha =
+            senhaInput.value.trim();
 
 
-    try {
+        if (!nome || !senha) {
 
-        btnLogin.disabled = true;
+            mostrarMensagem(
+                "Informe usuário e senha.",
+                "error"
+            );
 
-        btnLogin.innerHTML = `
-            <span>Entrando...</span>
-            <i class="fa-solid fa-spinner fa-spin"></i>
-        `;
-
-
-        mostrarMensagem(
-            "Conectando ao servidor...",
-            ""
-        );
-
-
-        console.log("Enviando para Apps Script...");
-
-
-        const resposta = await fetch(
-            API_URL,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
-                },
-
-                body: JSON.stringify({
-                    acao: "login",
-                    nome: nome,
-                    senha: senha
-                })
-            }
-        );
-
-
-        console.log(
-            "HTTP:",
-            resposta.status,
-            resposta.statusText
-        );
-
-
-        const texto = await resposta.text();
-
-        console.log(
-            "Resposta bruta:",
-            texto
-        );
-
-
-        let resultado;
+            return;
+        }
 
 
         try {
 
-            resultado =
-                JSON.parse(texto);
+            btnLogin.disabled = true;
 
-        } catch (erro) {
+            btnLogin.innerHTML = `
+                <span>Entrando...</span>
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            `;
 
-            console.error(
-                "Resposta não é JSON:",
+
+            mostrarMensagem(
+                "Conectando ao servidor...",
+                ""
+            );
+
+
+            const resposta =
+                await fetch(
+                    API_URL,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "text/plain;charset=utf-8"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                acao: "login",
+                                nome: nome,
+                                senha: senha
+                            })
+                    }
+                );
+
+
+            console.log(
+                "HTTP:",
+                resposta.status
+            );
+
+
+            const texto =
+                await resposta.text();
+
+
+            console.log(
+                "Resposta Apps Script:",
                 texto
             );
 
-            throw new Error(
-                "O Apps Script não retornou uma resposta válida."
+
+            let resultado;
+
+
+            try {
+
+                resultado =
+                    JSON.parse(texto);
+
+            } catch {
+
+                throw new Error(
+                    "O servidor não retornou um JSON válido."
+                );
+
+            }
+
+
+            if (!resultado.success) {
+
+                throw new Error(
+                    resultado.message ||
+                    "Usuário ou senha inválidos."
+                );
+
+            }
+
+
+            /* =====================================
+               SALVA USUÁRIO
+            ===================================== */
+
+            sessionStorage.setItem(
+                "usuarioLogado",
+                JSON.stringify(
+                    resultado.usuario
+                )
             );
 
-        }
 
-
-        console.log(
-            "Resultado:",
-            resultado
-        );
-
-
-        if (!resultado.success) {
-
-            throw new Error(
-                resultado.message ||
-                "Usuário ou senha inválidos."
+            mostrarMensagem(
+                "Acesso autorizado.",
+                "success"
             );
 
-        }
 
-
-        sessionStorage.setItem(
-            "usuarioLogado",
-            JSON.stringify(
+            console.log(
+                "Usuário autenticado:",
                 resultado.usuario
-            )
-        );
+            );
 
 
-        mostrarMensagem(
-            "Acesso autorizado.",
-            "success"
-        );
+            setTimeout(
+                () => {
+
+                    window.location.href =
+                        "./dashboard.html";
+
+                },
+                400
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "ERRO LOGIN:",
+                error
+            );
 
 
-        console.log(
-            "LOGIN OK:",
-            resultado.usuario
-        );
+            mostrarMensagem(
+                error.message ||
+                "Erro ao realizar login.",
+                "error"
+            );
 
+        }
 
-        setTimeout(() => {
+        finally {
 
-            window.location.href =
-                "./dashboard.html";
+            btnLogin.disabled = false;
 
-        }, 500);
+            btnLogin.innerHTML = `
+                <span>Entrar</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            `;
 
-    }
-
-    catch (error) {
-
-        console.error(
-            "ERRO LOGIN:",
-            error
-        );
-
-
-        mostrarMensagem(
-            error.message ||
-            "Erro ao realizar login.",
-            "error"
-        );
-
-    }
-
-    finally {
-
-        btnLogin.disabled = false;
-
-        btnLogin.innerHTML = `
-            <span>Entrar</span>
-            <i class="fa-solid fa-arrow-right"></i>
-        `;
+        }
 
     }
-
-});
+);
 
 
 /* =========================================
-   MOSTRAR SENHA
+   MOSTRAR / OCULTAR SENHA
 ========================================= */
 
 if (togglePassword) {
@@ -214,7 +206,9 @@ if (togglePassword) {
 
 
             const icone =
-                togglePassword.querySelector("i");
+                togglePassword.querySelector(
+                    "i"
+                );
 
 
             if (icone) {
@@ -244,8 +238,10 @@ function mostrarMensagem(
     loginMessage.textContent =
         mensagem;
 
+
     loginMessage.className =
         "login-message";
+
 
     if (tipo) {
 
