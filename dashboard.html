@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Censo Hospitalar | Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="./css/dashboard.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-header">
+
+                <img
+                    src="./imgs/logos.png"
+                    alt="Logos institucionais"
+                    class="sidebar-logo"
+                >
+
+            </div>
+
+
+            <nav class="sidebar-menu">
+
+                <a
+                    href="#"
+                    class="menu-item active"
+                >
+                    <i class="fa-solid fa-house"></i>
+                    <span>Início</span>
+                </a>
+
+
+                <a
+                    href="#"
+                    class="menu-item coordinator-only"
+                >
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Meu Censo</span>
+                </a>
+
+
+                <a
+                    href="#"
+                    class="menu-item management-only"
+                >
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Panorama Geral</span>
+                </a>
+
+
+                <a
+                    href="#"
+                    class="menu-item"
+                >
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Relatório</span>
+                </a>
+
+            </nav>
+
+
+            <div class="sidebar-footer">
+
+                <button class="logout-button">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Sair</span>
+                </button>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- CONTEÚDO -->
+
+        <main class="main-content">
+
+
+            <!-- HEADER -->
+
+            <header class="topbar">
+
+                <div>
+
+                    <span class="page-label">
+                        Censo Hospitalar
+                    </span>
+
+                    <h1 id="pageTitle">
+                        Visão Geral
+                    </h1>
+
+                </div>
+
+
+                <div class="user-area">
+
+                    <div class="user-info">
+
+                        <strong id="userName">
+                            João Silva
+                        </strong>
+
+                        <span id="userRole">
+                            Gestão
+                        </span>
+
+                    </div>
+
+
+                    <div class="user-avatar">
+                        JS
+                    </div>
+
+                </div>
+
+            </header>
+
+
+
+            <!-- ========================================
+                 CONTEÚDO GESTÃO
+            ========================================= -->
+
+            <section
+                id="managementDashboard"
+                class="dashboard-section"
+            >
+
+                <div class="welcome-block">
+
+                    <div>
+
+                        <span class="section-label">
+                            Panorama diário
+                        </span>
+
+                        <h2>
+                            Acompanhamento do Censo Hospitalar
+                        </h2>
+
+                        <p>
+                            Visualize o andamento do preenchimento
+                            dos setores e os principais dados consolidados.
+                        </p>
+
+                    </div>
+
+
+                    <div class="date-box">
+
+                        <i class="fa-regular fa-calendar"></i>
+
+                        <div>
+                            <span>Data de referência</span>
+                            <strong id="currentDate">25/08/2026</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- CARDS -->
+
+                <div class="stats-grid">
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon green">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+
+                        <div>
+                            <span>Preenchidos</span>
+
+                            <strong id="completedCount">
+                                12
+                            </strong>
+
+                            <small>
+                                setores concluídos
+                            </small>
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon orange">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+
+                        <div>
+                            <span>Pendentes</span>
+
+                            <strong id="pendingCount">
+                                4
+                            </strong>
+
+                            <small>
+                                aguardando preenchimento
+                            </small>
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon blue">
+                            <i class="fa-solid fa-hospital-user"></i>
+                        </div>
+
+                        <div>
+                            <span>Total de setores</span>
+
+                            <strong id="totalSectors">
+                                16
+                            </strong>
+
+                            <small>
+                                setores cadastrados
+                            </small>
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon purple">
+                            <i class="fa-solid fa-chart-column"></i>
+                        </div>
+
+                        <div>
+                            <span>Conclusão</span>
+
+                            <strong id="completionRate">
+                                75%
+                            </strong>
+
+                            <small>
+                                do censo diário
+                            </small>
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+
+                <!-- TABELA -->
+
+                <div class="content-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="section-label">
+                                Monitoramento
+                            </span>
+
+                            <h3>
+                                Situação dos setores
+                            </h3>
+
+                        </div>
+
+                        <button class="secondary-button">
+
+                            <i class="fa-solid fa-rotate"></i>
+
+                            Atualizar
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-responsive">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>Setor</th>
+                                    <th>Responsável</th>
+                                    <th>Status</th>
+                                    <th>Última atualização</th>
+                                    <th>Ação</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                <tr>
+
+                                    <td>
+                                        UTI 1
+                                    </td>
+
+                                    <td>
+                                        Maria Silva
+                                    </td>
+
+                                    <td>
+                                        <span class="status-badge completed">
+                                            Preenchido
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        Hoje, 08:32
+                                    </td>
+
+                                    <td>
+
+                                        <button class="table-action">
+                                            Visualizar
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+
+                                <tr>
+
+                                    <td>
+                                        Emergência
+                                    </td>
+
+                                    <td>
+                                        Carlos Santos
+                                    </td>
+
+                                    <td>
+                                        <span class="status-badge pending">
+                                            Pendente
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        —
+                                    </td>
+
+                                    <td>
+
+                                        <button class="table-action">
+                                            Visualizar
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+
+                                <tr>
+
+                                    <td>
+                                        Clínica Médica
+                                    </td>
+
+                                    <td>
+                                        Ana Souza
+                                    </td>
+
+                                    <td>
+                                        <span class="status-badge completed">
+                                            Preenchido
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        Hoje, 09:10
+                                    </td>
+
+                                    <td>
+
+                                        <button class="table-action">
+                                            Visualizar
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ========================================
+                 CONTEÚDO COORDENADOR
+            ========================================= -->
+
+            <section
+                id="coordinatorDashboard"
+                class="dashboard-section hidden"
+            >
+
+                <div class="welcome-block">
+
+                    <div>
+
+                        <span class="section-label">
+                            Seu setor
+                        </span>
+
+                        <h2 id="coordinatorSector">
+                            UTI 1
+                        </h2>
+
+                        <p>
+                            Consulte e preencha o censo diário
+                            vinculado ao seu setor.
+                        </p>
+
+                    </div>
+
+
+                    <div class="date-box">
+
+                        <i class="fa-regular fa-calendar"></i>
+
+                        <div>
+                            <span>Data de referência</span>
+                            <strong>25/08/2026</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="coordinator-grid">
+
+
+                    <article class="census-card">
+
+                        <div class="census-card-top">
+
+                            <div class="census-icon">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                            </div>
+
+
+                            <span class="status-badge pending">
+                                Pendente
+                            </span>
+
+                        </div>
+
+
+                        <div class="census-card-content">
+
+                            <span>
+                                Censo diário
+                            </span>
+
+                            <h3>
+                                Censo de hoje ainda não preenchido
+                            </h3>
+
+                            <p>
+                                Preencha as informações do seu setor
+                                para concluir o censo diário.
+                            </p>
+
+                        </div>
+
+
+                        <button class="primary-button">
+
+                            <i class="fa-solid fa-pen-to-square"></i>
+
+                            Preencher Censo
+
+                        </button>
+
+                    </article>
+
+
+
+                    <article class="info-card">
+
+                        <div class="info-card-icon">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Último censo
+                            </span>
+
+                            <strong>
+                                24/08/2026
+                            </strong>
+
+                            <p>
+                                Preenchido às 08:46
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+
+                <div class="content-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="section-label">
+                                Histórico recente
+                            </span>
+
+                            <h3>
+                                Últimos censos preenchidos
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-responsive">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Status</th>
+                                    <th>Atualizado em</th>
+                                    <th>Ação</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                <tr>
+
+                                    <td>
+                                        24/08/2026
+                                    </td>
+
+                                    <td>
+
+                                        <span class="status-badge completed">
+                                            Preenchido
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        24/08/2026 08:46
+                                    </td>
+
+                                    <td>
+
+                                        <button class="table-action">
+                                            Visualizar
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+
+                                <tr>
+
+                                    <td>
+                                        23/08/2026
+                                    </td>
+
+                                    <td>
+
+                                        <span class="status-badge completed">
+                                            Preenchido
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        23/08/2026 08:39
+                                    </td>
+
+                                    <td>
+
+                                        <button class="table-action">
+                                            Visualizar
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <script src="./js/dashboard.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+></script>
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"
+></script>
+    <title>Censo Hospitalar | Relatório</title>
+
+    <link
+        rel="stylesheet"
+        href="./css/relatorio.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- =========================================
+         SIDEBAR
+    ========================================== -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+
+            <img
+                src="./imgs/logos.png"
+                alt="Logos institucionais"
+                class="sidebar-logo"
+            >
+
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+            <a
+                href="./dashboard.html"
+                class="menu-item"
+            >
+                <i class="fa-solid fa-house"></i>
+                <span>Início</span>
+            </a>
+
+
+            <a
+                href="./meu-censo.html"
+                class="menu-item coordinator-only"
+            >
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Meu Censo</span>
+            </a>
+
+
+            <a
+                href="#"
+                class="menu-item management-only"
+            >
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Panorama Geral</span>
+            </a>
+
+
+            <a
+                href="./relatorio.html"
+                class="menu-item active"
+            >
+                <i class="fa-solid fa-file-pdf"></i>
+                <span>Relatório</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <button
+                type="button"
+                class="logout-button"
+            >
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Sair</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================
+         PRINCIPAL
+    ========================================== -->
+
+    <main class="main-content">
+
+
+        <!-- =========================================
+             TOPBAR
+        ========================================== -->
+
+        <header class="topbar">
+
+            <div class="topbar-brand">
+
+                <div class="topbar-icon">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </div>
+
+
+                <div>
+
+                    <span class="page-label">
+                        Censo Hospitalar
+                    </span>
+
+                    <h1>
+                        Relatório
+                    </h1>
+
+                </div>
+
+            </div>
+
+
+            <div class="user-area">
+
+                <div class="user-info">
+
+                    <strong id="userName">
+                        Maria Silva
+                    </strong>
+
+                    <span id="userRole">
+                        Coordenador
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="user-avatar"
+                    id="userAvatar"
+                >
+                    MS
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =========================================
+             CONTEÚDO
+        ========================================== -->
+
+        <div class="page-content">
+
+            <section class="report-container">
+
+
+                <!-- =========================================
+                     CABEÇALHO
+                ========================================== -->
+
+                <div class="report-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            Relatório mensal
+                        </span>
+
+                        <h2>
+                            Censo Hospitalar
+                        </h2>
+
+                        <p>
+                            Gere o relatório consolidado do setor em formato de planilha.
+                        </p>
+
+                    </div>
+
+
+                    <div class="report-icon">
+
+                        <i class="fa-solid fa-table"></i>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     FILTROS
+                ========================================== -->
+<!-- =========================================
+     FILTROS
+========================================== -->
+
+<div class="report-filters">
+
+    <!-- SETOR - VISÍVEL PARA GESTÃO -->
+    <div
+        class="filter-group"
+        id="filtroSetorContainer"
+    >
+
+        <label for="setorRelatorio">
+            Setor
+        </label>
+
+        <div class="select-wrapper">
+
+            <i class="fa-solid fa-hospital"></i>
+
+            <select
+                id="setorRelatorio"
+                name="setorRelatorio"
+            >
+                <option value="">
+                    Consolidado Geral
+                </option>
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- MÊS / ANO -->
+    <div class="filter-group">
+
+        <label for="mesRelatorio">
+            Mês / Ano
+        </label>
+
+        <div class="month-wrapper">
+
+            <i class="fa-regular fa-calendar"></i>
+
+            <input
+                type="month"
+                id="mesRelatorio"
+                name="mesRelatorio"
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- CONSULTAR -->
+    <button
+        type="button"
+        class="load-report-button"
+        id="btnCarregarRelatorio"
+    >
+        <i class="fa-solid fa-magnifying-glass"></i>
+        Consultar
+    </button>
+
+</div>
+
+
+<!-- =========================================
+     RESUMO
+========================================== -->
+
+<div
+    class="report-summary hidden"
+    id="reportSummary"
+>
+
+    <div class="summary-item">
+
+        <span>Setor</span>
+
+        <strong id="summarySector">
+            —
+        </strong>
+
+    </div>
+
+
+    <div class="summary-item">
+
+        <span>Período</span>
+
+        <strong id="summaryPeriod">
+            —
+        </strong>
+
+    </div>
+
+
+    <div class="summary-item">
+
+        <span>Total de Diárias</span>
+
+        <strong id="summaryDiarias">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="summary-item">
+
+        <span>Óbitos Total</span>
+
+        <strong id="summaryObitos">
+            0
+        </strong>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     PRÉ-VISUALIZAÇÃO
+========================================== -->
+
+<div
+    class="report-card hidden"
+    id="reportCard"
+>
+
+    <div class="report-card-header">
+
+        <div>
+
+            <span class="section-label">
+                Pré-visualização
+            </span>
+
+            <h3 id="reportTitle">
+                Relatório do Censo
+            </h3>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="pdf-button"
+            id="btnGerarPdf"
+        >
+            <i class="fa-solid fa-file-pdf"></i>
+            Gerar PDF
+        </button>
+
+    </div>
+
+
+    <!-- =====================================
+         TABELA
+    ====================================== -->
+
+    <div class="table-responsive">
+
+        <table class="report-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Dia</th>
+
+                    <th>Especialidade</th>
+
+                    <th>Encontro</th>
+
+                    <th>Altas</th>
+
+                    <th>Evasão</th>
+
+                    <th>Ób. &lt;24h</th>
+
+                    <th>Ób. &gt;24h</th>
+
+                    <th>Transf. Ext.</th>
+
+                    <th>Transf. Int.</th>
+
+                    <th>Admissão</th>
+
+                    <th>Deixo</th>
+
+                    <th>Leito Bloq. Isolamento</th>
+
+                    <th>Leito Bloq. Manutenção</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="reportTableBody">
+            </tbody>
+
+
+            <tfoot>
+
+                <tr>
+
+                    <td
+                        colspan="9"
+                        class="total-label"
+                    >
+                        Totais do período
+                    </td>
+
+
+                    <td>
+
+                        <strong id="footerAdmissoes">
+                            0
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        <strong id="footerDiarias">
+                            0
+                        </strong>
+
+                    </td>
+
+
+                    <td colspan="2">
+
+                        <div class="footer-obitos">
+
+                            <span>
+                                Óbitos:
+                            </span>
+
+                            <strong id="footerObitos">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            </tfoot>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     ESTADO VAZIO
+========================================== -->
+
+<div
+    class="empty-report"
+    id="emptyReport"
+>
+
+    <div class="empty-icon">
+
+        <i class="fa-solid fa-table"></i>
+
+    </div>
+
+    <strong>
+        Selecione o período
+    </strong>
+
+    <span>
+        Os dados do relatório serão exibidos aqui.
+    </span>
+
+</div>
+
+
+<script src="./js/relatorio.js"></script>
+
+</body>
+
+</html>

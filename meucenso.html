@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Censo Hospitalar | Meu Censo</title>
+
+    <link rel="stylesheet" href="./css/meu-censo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="./imgs/logos.png" alt="Logos institucionais" class="sidebar-logo">
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="./dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Início</span>
+                </a>
+
+                <a href="./meu-censo.html" class="menu-item active">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Meu Censo</span>
+                </a>
+
+               <a href="./relatorio.html" class="menu-item">
+    <i class="fa-solid fa-file-pdf"></i>
+    <span>Relatório</span>
+</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button type="button" class="logout-button">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div class="topbar-brand">
+                    <div class="topbar-icon">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
+
+                    <div>
+                        <span class="page-label">Censo Hospitalar</span>
+                        <h1>Meu Censo</h1>
+                    </div>
+                </div>
+
+                <div class="user-area">
+                    <div class="user-info">
+                        <strong id="userName">Maria Silva</strong>
+                        <span>Coordenador</span>
+                    </div>
+
+                    <div class="user-avatar" id="userAvatar">MS</div>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <section class="censo-container">
+
+                    <div class="period-toolbar">
+                        <div class="period-copy">
+                            <span class="section-label">Período de referência</span>
+                            <h2>Selecione o mês do censo</h2>
+                            <p>Escolha o mês/ano e depois clique no dia que deseja preencher ou consultar.</p>
+                        </div>
+
+                        <div class="month-selector">
+                            <label for="mesAnoCenso">Mês / Ano</label>
+
+                            <div class="month-input-wrapper">
+                                <i class="fa-regular fa-calendar"></i>
+                                <input type="month" id="mesAnoCenso" name="mesAnoCenso">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="period-deadline waiting" id="periodDeadline">
+                        <div class="deadline-icon">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+
+                        <div>
+                            <span>Prazo para alterações</span>
+                            <strong id="deadlineText">Selecione um mês para consultar o período.</strong>
+                        </div>
+                    </div>
+
+                    <section class="month-panel">
+                        <div class="month-panel-header">
+                            <div>
+                                <span>Mês de referência</span>
+                                <h3 id="mesReferenciaTitulo">Selecione um mês</h3>
+                            </div>
+
+                            <div class="month-legend">
+                                <span><i class="legend-dot completed"></i>Preenchido</span>
+                                <span><i class="legend-dot pending"></i>Pendente</span>
+                                <span><i class="legend-dot selected"></i>Selecionado</span>
+                            </div>
+                        </div>
+
+                        <div class="days-grid" id="daysGrid">
+                            <div class="days-empty">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Selecione um mês para visualizar os dias.</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="choose-day-message" id="chooseDayMessage">
+                        <div class="choose-day-icon">
+                            <i class="fa-regular fa-hand-pointer"></i>
+                        </div>
+
+                        <div>
+                            <strong>Selecione um dia</strong>
+                            <span>O formulário será liberado depois que você escolher o dia do censo.</span>
+                        </div>
+                    </div>
+
+                    <div class="censo-form-area hidden" id="censoFormArea">
+
+                        <div class="active-date-bar">
+                            <div>
+                                <span>Censo selecionado</span>
+                                <strong id="activeDateText">—</strong>
+                            </div>
+
+                            <span class="edit-status open" id="editStatus">Período aberto</span>
+                        </div>
+
+                        <section class="censo-group" data-group="clinica-medica">
+                            <div class="group-heading">
+                                <div class="group-icon">
+                                    <i class="fa-solid fa-stethoscope"></i>
+                                </div>
+
+                                <div>
+                                    <span>Grupo assistencial</span>
+                                    <h3>Clínica Médica</h3>
+                                    <p>Saúde Mental, Clínica Médica, Neurologia (UAVC) e Oncologia Clínica.</p>
+                                </div>
+                            </div>
+
+
+                  <details
+    class="specialty-card"
+    data-especialidade="saude-mental"
+>
+
+    <summary>
+
+        <div class="specialty-title">
+
+            <div class="specialty-number">
+                01
+            </div>
+
+            <div>
+                <strong>Saúde Mental</strong>
+                <span>Censo diário da especialidade</span>
+            </div>
+
+        </div>
+
+
+        <div class="summary-right">
+
+            <span
+                class="specialty-status"
+                data-status
+            >
+                Não preenchido
+            </span>
+
+            <i class="fa-solid fa-chevron-down"></i>
+
+        </div>
+
+    </summary>
+
+
+    <div class="specialty-content">
+
+        <!-- INDICADORES -->
+
+        <div class="automatic-row">
+
+            <div class="automatic-item">
+                <span>Encontro</span>
+                <strong data-encontro>0</strong>
+            </div>
+
+
+            <div class="automatic-item">
+                <span>Nº Saídas/Dia</span>
+                <strong data-saidas>0</strong>
+            </div>
+
+
+            <div class="automatic-item">
+                <span>Óbitos Total</span>
+                <strong data-obitos-total>0</strong>
+            </div>
+
+
+            <div class="automatic-item">
+                <span>Deixo</span>
+                <strong data-deixo>0</strong>
+            </div>
+
+        </div>
+
+
+        <!-- CAMPOS -->
+
+        <div class="fields-grid">
+
+            <!-- ENCONTRO SOMENTE NO DIA 1 -->
+
+            <div
+                class="field-group encontro-manual-group hidden"
+                data-encontro-manual
+            >
+                <label>
+                    Encontro inicial
+                </label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="encontroManual"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Altas</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="altas"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Evasão</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="evasao"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Óbitos &lt; 24h</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="obitosMenor24"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Óbitos &gt; 24h</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="obitosMaior24"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Transf. Externas</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="transfExternas"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Transf. Internas</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="transfInternas"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Admissão</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="admissao"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Leito bloq. isolamento</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="leitoIsolamento"
+                >
+            </div>
+
+
+            <div class="field-group">
+                <label>Leito bloq. manutenção</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                    data-field="leitoManutencao"
+                >
+            </div>
+
+        </div>
+
+
+        <!-- USADO INTERNAMENTE PELO JS -->
+
+        <div
+            class="previous-day-note"
+            data-previous-day-note
+        >
+            <strong data-deixo-anterior>
+                0
+            </strong>
+        </div>
+
+    </div>
+
+</details>
+
+                    <details class="specialty-card" data-especialidade="clinica-medica">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">02</div>
+                                <div>
+                                    <strong>Clínica Médica</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="neurologia-uavc">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">03</div>
+                                <div>
+                                    <strong>Neurologia (UAVC)</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="oncologia-clinica">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">04</div>
+                                <div>
+                                    <strong>Oncologia Clínica</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                           <div class="group-total">
+
+    <!-- TOTAL DE DIÁRIAS -->
+    <div class="group-total-item">
+
+        <div>
+            <span>Clínica Médica</span>
+            <strong>Total de Diárias Geral</strong>
+        </div>
+
+        <strong
+            class="total-number"
+            id="totalDiariasClinicaMedica"
+        >
+            0
+        </strong>
+
+    </div>
+
+
+    <!-- TOTAL DE ÓBITOS -->
+    <div class="group-total-item">
+
+        <div>
+            <span>Clínica Médica</span>
+            <strong>Óbitos Total</strong>
+        </div>
+
+        <strong
+            class="total-number"
+            id="totalObitosClinicaMedica"
+        >
+            0
+        </strong>
+
+    </div>
+
+</div>
+                        </section>
+
+                        <section class="censo-group" data-group="clinica-cirurgica">
+                            <div class="group-heading">
+                                <div class="group-icon">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                </div>
+
+                                <div>
+                                    <span>Grupo assistencial</span>
+                                    <h3>Clínica Cirúrgica</h3>
+                                    <p>Cardiologia, Vascular, Ortotraumatologia, Neurocirurgia, Cirurgia Geral e Oncologia Cirúrgica.</p>
+                                </div>
+                            </div>
+
+
+                    <details class="specialty-card" data-especialidade="cardiologia">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">01</div>
+                                <div>
+                                    <strong>Cardiologia</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="vascular">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">02</div>
+                                <div>
+                                    <strong>Vascular</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="ortotraumatologia">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">03</div>
+                                <div>
+                                    <strong>Ortotraumatologia</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="neurocirurgia">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">04</div>
+                                <div>
+                                    <strong>Neurocirurgia</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="cirurgia-geral">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">05</div>
+                                <div>
+                                    <strong>Cirurgia Geral</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                    <details class="specialty-card" data-especialidade="oncologia-cirurgica">
+                        <summary>
+                            <div class="specialty-title">
+                                <div class="specialty-number">06</div>
+                                <div>
+                                    <strong>Oncologia Cirúrgica</strong>
+                                    <span>Censo diário da especialidade</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-right">
+                                <span class="specialty-status" data-status>Não preenchido</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </summary>
+
+                        <div class="specialty-content">
+                            <div class="automatic-row">
+                                <div class="automatic-item">
+                                    <span>Encontro</span>
+                                    <strong data-encontro>0</strong>
+                                    <small>Dia 1 manual • Dia 2+ = deixo anterior + admissão</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Nº Saídas/Dia</span>
+                                    <strong data-saidas>0</strong>
+                                    <small>Altas + evasão + óbitos + transf. externas</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Óbitos Total</span>
+                                    <strong data-obitos-total>0</strong>
+                                    <small>&lt;24h + &gt;24h</small>
+                                </div>
+
+                                <div class="automatic-item">
+                                    <span>Deixo</span>
+                                    <strong data-deixo>0</strong>
+                                    <small>Encontro - saídas</small>
+                                </div>
+                            </div>
+
+                            <div class="fields-grid">
+                                
+                                <div
+                                    class="field-group encontro-manual-group hidden"
+                                    data-encontro-manual
+                                >
+                                    <label>Encontro inicial</label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="0"
+                                        data-field="encontroManual"
+                                    >
+
+                                    <small>
+                                        Preencha apenas no primeiro dia do mês.
+                                    </small>
+                                </div>
+<div class="field-group">
+                                    <label>Altas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="altas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Evasão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="evasao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &lt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMenor24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Óbitos &gt; 24h</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="obitosMaior24">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Externas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfExternas">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Transf. Internas</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="transfInternas">
+                                    <small>Não entra no cálculo das saídas.</small>
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Admissão</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="admissao">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. isolamento</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoIsolamento">
+                                </div>
+
+                                <div class="field-group">
+                                    <label>Leito bloq. manutenção</label>
+                                    <input type="number" min="0" step="1" value="0" data-field="leitoManutencao">
+                                </div>
+                            </div>
+
+                            <div class="previous-day-note" data-previous-day-note>
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Deixo do dia anterior:</span>
+                                <strong data-deixo-anterior>0</strong>
+                            </div>
+                        </div>
+                    </details>
+
+
+                          <div class="group-total">
+
+    <!-- TOTAL DE DIÁRIAS -->
+    <div class="group-total-item">
+
+        <div>
+            <span>Clínica Cirúrgica</span>
+            <strong>Total de Diárias Geral</strong>
+        </div>
+
+        <strong
+            class="total-number"
+            id="totalDiariasClinicaCirurgica"
+        >
+            0
+        </strong>
+
+    </div>
+
+
+    <!-- TOTAL DE ÓBITOS -->
+    <div class="group-total-item">
+
+        <div>
+            <span>Clínica Cirúrgica</span>
+            <strong>Óbitos Total</strong>
+        </div>
+
+        <strong
+            class="total-number"
+            id="totalObitosClinicaCirurgica"
+        >
+            0
+        </strong>
+
+    </div>
+
+</div>
+                        </section>
+
+                        <footer class="censo-actions">
+                            <div class="action-info">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Revise os dados de todas as especialidades antes de salvar.</span>
+                            </div>
+
+                            <button type="button" class="save-button" id="saveCenso">
+                                <i class="fa-regular fa-floppy-disk"></i>
+                                Salvar Censo
+                            </button>
+                        </footer>
+
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="./js/meu-censo.js"></script>
+</body>
+</html>
