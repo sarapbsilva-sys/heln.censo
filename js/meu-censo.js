@@ -1,202 +1,802 @@
-/* =========================================
-   ELEMENTOS
-========================================= */
+/* =========================================================
+   MEU CENSO - PLANILHA MENSAL
+========================================================= */
 
-const mesAnoInput =
-    document.getElementById("mesAnoCenso");
+const usuarioLogadoRaw = sessionStorage.getItem("usuarioLogado");
 
-const daysGrid =
-    document.getElementById("daysGrid");
+if (!usuarioLogadoRaw) {
+    window.location.href = "./index.html";
+    throw new Error("Usuário não autenticado.");
+}
 
-const mesReferenciaTitulo =
-    document.getElementById("mesReferenciaTitulo");
+let usuarioLogado;
 
-const periodDeadline =
-    document.getElementById("periodDeadline");
-
-const deadlineText =
-    document.getElementById("deadlineText");
-
-const chooseDayMessage =
-    document.getElementById("chooseDayMessage");
-
-const censoFormArea =
-    document.getElementById("censoFormArea");
-
-const activeDateText =
-    document.getElementById("activeDateText");
-
-const editStatus =
-    document.getElementById("editStatus");
-
-const saveCenso =
-    document.getElementById("saveCenso");
-
-const totalClinicaMedica =
-    document.getElementById(
-        "totalDiariasClinicaMedica"
-    );
-
-const totalClinicaCirurgica =
-    document.getElementById(
-        "totalDiariasClinicaCirurgica"
-    );
-
-
-/* =========================================
-   CONFIGURAÇÕES
-========================================= */
-
-const meses = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro"
-];
-
-
-let diaSelecionado = null;
-let mesSelecionado = null;
-let anoSelecionado = null;
-
-
-/* =========================================
-   BANCO LOCAL TEMPORÁRIO
-
-   Depois substituiremos pela API
-   ligada ao Google Sheets.
-========================================= */
-
-let censosTemporarios =
-    JSON.parse(
-        localStorage.getItem("censosHospitalares")
-    ) || {};
-
-
-/* =========================================
-   ALTERAÇÃO DO MÊS
-========================================= */
-
-mesAnoInput.addEventListener(
-    "change",
-    () => {
-
-        if (!mesAnoInput.value) {
-
-            limparPeriodo();
-
-            return;
-        }
-
-
-        const [
-            anoString,
-            mesString
-        ] = mesAnoInput.value.split("-");
-
-
-        anoSelecionado =
-            Number(anoString);
-
-        mesSelecionado =
-            Number(mesString);
-
-        diaSelecionado =
-            null;
-
-
-        mesReferenciaTitulo.textContent =
-            `${meses[mesSelecionado - 1]} de ${anoSelecionado}`;
-
-
-        atualizarPrazo();
-
-        gerarDias();
-
-
-        chooseDayMessage.classList.remove(
-            "hidden"
-        );
-
-        censoFormArea.classList.add(
-            "hidden"
-        );
-
-    }
-);
-
-
-/* =========================================
-   LIMPAR PERÍODO
-========================================= */
-
-function limparPeriodo() {
-
-    diaSelecionado = null;
-    mesSelecionado = null;
-    anoSelecionado = null;
-
-
-    mesReferenciaTitulo.textContent =
-        "Selecione um mês";
-
-
-    deadlineText.textContent =
-        "Selecione um mês para consultar o período.";
-
-
-    periodDeadline.classList.remove(
-        "closed"
-    );
-
-
-    daysGrid.innerHTML = `
-        <div class="days-empty">
-
-            <i class="fa-regular fa-calendar"></i>
-
-            <span>
-                Selecione um mês para visualizar os dias.
-            </span>
-
-        </div>
-    `;
-
-
-    chooseDayMessage.classList.remove(
-        "hidden"
-    );
-
-    censoFormArea.classList.add(
-        "hidden"
-    );
-
+try {
+    usuarioLogado = JSON.parse(usuarioLogadoRaw);
+} catch (erro) {
+    sessionStorage.removeItem("usuarioLogado");
+    window.location.href = "./index.html";
+    throw erro;
 }
 
 
-/* =========================================
-   GERAR DIAS
-========================================= */
+/* =========================================================
+   ELEMENTOS
+========================================================= */
 
-function gerarDias() {
+const mesAnoCenso = document.getElementById("mesAnoCenso");
+const sectorName = document.getElementById("sectorName");
+const userName = document.getElementById("userName");
+const userRole = document.getElementById("userRole");
+const userAvatar = document.getElementById("userAvatar");
 
-    daysGrid.innerHTML = "";
+const deadlineBox =
+    document.getElementById("deadlineBox") ||
+    document.querySelector(".deadline-box");
+
+const deadlineText = document.getElementById("deadlineText");
+
+const deadlineIcon =
+    document.getElementById("deadlineIcon") ||
+    deadlineBox?.querySelector("i");
+
+const saveCenso = document.getElementById("saveCenso");
+const saveCensoBottom = document.getElementById("saveCensoBottom");
+
+const logoutButton =
+    document.getElementById("logoutButton") ||
+    document.querySelector(".logout-button");
 
 
-    const quantidadeDias =
+/* =========================================================
+   ESTADO
+========================================================= */
+
+let mesSelecionado = null;
+let anoSelecionado = null;
+let quantidadeDias = 0;
+let periodoAberto = false;
+let dadosMes = {};
+
+
+/* =========================================================
+   CONFIGURAÇÕES
+========================================================= */
+
+const camposAutomaticos = new Set([
+    "encontro",
+    "deixo",
+    "numeroSaidas",
+    "obitosTotal",
+    "pacientesDia"
+]);
+
+const camposDigitaveis = new Set([
+    "altas",
+    "evasao",
+    "obitosMenor24",
+    "obitosMaior24",
+    "transfExternas",
+    "transfInternas",
+    "admissao",
+    "leitoIsolamento",
+    "leitoManutencao"
+]);
+
+const gruposEspecialidades = {
+
+    "clinica-medica": [
+        "saude-mental",
+        "clinica-medica",
+        "neurologia-uavc",
+        "oncologia-clinica"
+    ],
+
+    "clinica-cirurgica": [
+        "cardiologia",
+        "vascular",
+        "ortotraumatologia",
+        "neurocirurgia",
+        "cirurgia-geral",
+        "oncologia-cirurgica"
+    ]
+};
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+========================================================= */
+
+inicializar();
+
+function inicializar() {
+
+    preencherUsuario();
+
+    configurarEventos();
+
+    selecionarMesAtual();
+}
+
+
+/* =========================================================
+   USUÁRIO NA TELA
+========================================================= */
+
+function preencherUsuario() {
+
+    const nome =
+        String(
+            usuarioLogado.nome || "Usuário"
+        ).trim();
+
+    const perfil =
+        String(
+            usuarioLogado.perfil || ""
+        )
+        .trim()
+        .toUpperCase();
+
+    const setor =
+        String(
+            usuarioLogado.setor || "—"
+        ).trim();
+
+
+    if (userName) {
+        userName.textContent = nome;
+    }
+
+
+    if (userRole) {
+
+        userRole.textContent =
+            perfil === "GESTAO"
+                ? "Gestão"
+                : "Coordenador";
+    }
+
+
+    if (sectorName) {
+
+        sectorName.textContent =
+            formatarNomeSetor(setor);
+    }
+
+
+    if (userAvatar) {
+
+        userAvatar.textContent =
+            gerarIniciais(nome);
+    }
+}
+
+
+/* =========================================================
+   EVENTOS
+========================================================= */
+
+function configurarEventos() {
+
+    if (mesAnoCenso) {
+
+        mesAnoCenso.addEventListener(
+            "change",
+            carregarPeriodoSelecionado
+        );
+    }
+
+
+    if (saveCenso) {
+
+        saveCenso.addEventListener(
+            "click",
+            salvarCenso
+        );
+    }
+
+
+    if (saveCensoBottom) {
+
+        saveCensoBottom.addEventListener(
+            "click",
+            salvarCenso
+        );
+    }
+
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            sair
+        );
+    }
+}
+
+
+/* =========================================================
+   MÊS ATUAL
+========================================================= */
+
+function selecionarMesAtual() {
+
+    if (!mesAnoCenso) {
+
+        console.error(
+            "Campo #mesAnoCenso não encontrado."
+        );
+
+        return;
+    }
+
+
+    const hoje = new Date();
+
+    const ano = hoje.getFullYear();
+
+    const mes =
+        String(
+            hoje.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    mesAnoCenso.value =
+        `${ano}-${mes}`;
+
+
+    carregarPeriodoSelecionado();
+}
+
+
+/* =========================================================
+   CARREGAR PERÍODO
+========================================================= */
+
+function carregarPeriodoSelecionado() {
+
+    if (
+        !mesAnoCenso ||
+        !mesAnoCenso.value
+    ) {
+        return;
+    }
+
+
+    const [ano, mes] =
+        mesAnoCenso.value.split("-");
+
+
+    anoSelecionado =
+        Number(ano);
+
+    mesSelecionado =
+        Number(mes);
+
+
+    quantidadeDias =
         new Date(
             anoSelecionado,
             mesSelecionado,
             0
         ).getDate();
+
+
+    periodoAberto =
+        verificarPeriodoAberto(
+            mesSelecionado,
+            anoSelecionado
+        );
+
+
+    carregarDadosLocais();
+
+    prepararCabecalhoDias();
+
+    ajustarColspans();
+
+    gerarCelulasDaPlanilha();
+
+    aplicarEstadoPeriodo();
+
+    recalcularTudo();
+}
+
+
+/* =========================================================
+   CABEÇALHO DOS DIAS
+========================================================= */
+
+function prepararCabecalhoDias() {
+
+    const cabecalhos =
+        document.querySelectorAll(
+            "thead th[data-day]"
+        );
+
+
+    const hoje =
+        new Date();
+
+
+    cabecalhos.forEach(th => {
+
+        const dia =
+            Number(
+                th.dataset.day
+            );
+
+
+        const existeNoMes =
+            dia <= quantidadeDias;
+
+
+        th.style.display =
+            existeNoMes
+                ? ""
+                : "none";
+
+
+        th.classList.remove(
+            "today-column"
+        );
+
+
+        if (
+            existeNoMes &&
+            hoje.getFullYear() === anoSelecionado &&
+            hoje.getMonth() + 1 === mesSelecionado &&
+            hoje.getDate() === dia
+        ) {
+
+            th.classList.add(
+                "today-column"
+            );
+        }
+    });
+}
+
+
+/* =========================================================
+   AJUSTAR COLSPAN
+========================================================= */
+
+function ajustarColspans() {
+
+    const colspan =
+        quantidadeDias + 1;
+
+
+    document
+        .querySelectorAll(
+            ".group-cell, .specialty-cell"
+        )
+        .forEach(td => {
+
+            td.colSpan =
+                colspan;
+        });
+}
+
+
+/* =========================================================
+   GERAR CÉLULAS DA PLANILHA
+========================================================= */
+
+function gerarCelulasDaPlanilha() {
+
+    const linhasIndicadores =
+        document.querySelectorAll(
+            "tbody tr[data-specialty][data-field]"
+        );
+
+
+    linhasIndicadores.forEach(linha => {
+
+        limparCelulasGeradas(
+            linha
+        );
+
+
+        const especialidade =
+            linha.dataset.specialty;
+
+
+        const campo =
+            linha.dataset.field;
+
+
+        if (
+            campo === "pacientesDia"
+        ) {
+
+            linha.classList.add(
+                "patients-row"
+            );
+        }
+
+
+        for (
+            let dia = 1;
+            dia <= quantidadeDias;
+            dia++
+        ) {
+
+            const td =
+                document.createElement(
+                    "td"
+                );
+
+
+            td.dataset.specialty =
+                especialidade;
+
+            td.dataset.field =
+                campo;
+
+            td.dataset.day =
+                String(dia);
+
+
+            aplicarDestaqueDiaAtual(
+                td,
+                dia
+            );
+
+
+            /*
+             * ENCONTRO:
+             *
+             * DIA 1 = MANUAL
+             *
+             * DIA 2 EM DIANTE = AUTOMÁTICO
+             *
+             * encontro atual =
+             * deixo anterior + admissão atual
+             */
+
+            if (
+                campo === "encontro" &&
+                dia === 1
+            ) {
+
+                criarInputCelula(
+                    td,
+                    especialidade,
+                    campo,
+                    dia
+                );
+            }
+
+            else if (
+                camposAutomaticos.has(
+                    campo
+                )
+            ) {
+
+                criarCelulaAutomatica(
+                    td
+                );
+            }
+
+            else {
+
+                criarInputCelula(
+                    td,
+                    especialidade,
+                    campo,
+                    dia
+                );
+            }
+
+
+            linha.appendChild(
+                td
+            );
+        }
+    });
+
+
+    gerarCelulasTotais();
+}
+
+
+/* =========================================================
+   LIMPAR CÉLULAS ANTIGAS
+========================================================= */
+
+function limparCelulasGeradas(
+    linha
+) {
+
+    while (
+        linha.children.length > 1
+    ) {
+
+        linha.removeChild(
+            linha.lastElementChild
+        );
+    }
+}
+
+
+/* =========================================================
+   CRIAR INPUT EDITÁVEL
+========================================================= */
+
+function criarInputCelula(
+    td,
+    especialidade,
+    campo,
+    dia
+) {
+
+    const input =
+        document.createElement(
+            "input"
+        );
+
+
+    input.type =
+        "number";
+
+    input.min =
+        "0";
+
+    input.step =
+        "1";
+
+    input.inputMode =
+        "numeric";
+
+
+    input.className =
+        "censo-cell-input";
+
+
+    input.dataset.specialty =
+        especialidade;
+
+    input.dataset.field =
+        campo;
+
+    input.dataset.day =
+        String(dia);
+
+
+    input.value =
+        String(
+            obterValorSalvo(
+                especialidade,
+                campo,
+                dia
+            )
+        );
+
+
+    input.disabled =
+        !periodoAberto;
+
+
+    input.addEventListener(
+        "input",
+        () => {
+
+            normalizarInput(
+                input
+            );
+
+
+            salvarValorMemoria(
+                especialidade,
+                campo,
+                dia,
+                obterNumeroInput(
+                    input
+                )
+            );
+
+
+            /*
+             * Quando qualquer campo do dia
+             * for alterado, recalculamos
+             * toda a especialidade.
+             *
+             * Isso é necessário porque:
+             *
+             * uma alteração no dia 2
+             * pode alterar o DEIXO do dia 2,
+             * que altera o ENCONTRO do dia 3,
+             * que altera o DEIXO do dia 3...
+             */
+
+            recalcularEspecialidade(
+                especialidade
+            );
+
+
+            recalcularTotais();
+        }
+    );
+
+
+    td.appendChild(
+        input
+    );
+}
+
+
+/* =========================================================
+   CRIAR CÉLULA AUTOMÁTICA
+========================================================= */
+
+function criarCelulaAutomatica(
+    td
+) {
+
+    td.classList.add(
+        "auto-cell"
+    );
+
+
+    td.textContent =
+        "0";
+}
+
+
+/* =========================================================
+   GERAR CÉLULAS DOS TOTAIS
+========================================================= */
+
+function gerarCelulasTotais() {
+
+    const linhas =
+        document.querySelectorAll(
+            "tbody tr[data-total-group][data-total-field]"
+        );
+
+
+    linhas.forEach(linha => {
+
+        limparCelulasGeradas(
+            linha
+        );
+
+
+        const grupo =
+            linha.dataset.totalGroup;
+
+
+        const campo =
+            linha.dataset.totalField;
+
+
+        for (
+            let dia = 1;
+            dia <= quantidadeDias;
+            dia++
+        ) {
+
+            const td =
+                document.createElement(
+                    "td"
+                );
+
+
+            td.classList.add(
+                "auto-cell"
+            );
+
+
+            td.dataset.totalGroup =
+                grupo;
+
+
+            td.dataset.totalField =
+                campo;
+
+
+            td.dataset.day =
+                String(dia);
+
+
+            td.textContent =
+                "0";
+
+
+            aplicarDestaqueDiaAtual(
+                td,
+                dia
+            );
+
+
+            linha.appendChild(
+                td
+            );
+        }
+    });
+}
+
+
+/* =========================================================
+   RECALCULAR TUDO
+========================================================= */
+
+function recalcularTudo() {
+
+    const especialidades =
+        obterEspecialidadesDaTela();
+
+
+    especialidades.forEach(
+        especialidade => {
+
+            recalcularEspecialidade(
+                especialidade
+            );
+        }
+    );
+
+
+    recalcularTotais();
+}
+
+
+/* =========================================================
+   ESPECIALIDADES EXISTENTES NA TELA
+========================================================= */
+
+function obterEspecialidadesDaTela() {
+
+    const conjunto =
+        new Set();
+
+
+    document
+        .querySelectorAll(
+            "tbody tr[data-specialty]"
+        )
+        .forEach(linha => {
+
+            if (
+                linha.dataset.specialty
+            ) {
+
+                conjunto.add(
+                    linha.dataset.specialty
+                );
+            }
+        });
+
+
+    return [
+        ...conjunto
+    ];
+}
+
+
+/* =========================================================
+   INÍCIO DOS CÁLCULOS
+========================================================= */
+
+function recalcularEspecialidade(
+    especialidade
+) {
+
+    /*
+     * Essa variável carrega o DEIXO
+     * calculado do dia anterior.
+     *
+     * Exemplo:
+     *
+     * Dia 1 -> deixo = 20
+     *
+     * Dia 2:
+     * encontro = 20 + admissões do dia 2
+     */
+
+    let deixoAnterior =
+        0;
 
 
     for (
@@ -205,151 +805,480 @@ function gerarDias() {
         dia++
     ) {
 
-        const botao =
-            document.createElement(
-                "button"
+        const altas =
+            obterValor(
+                especialidade,
+                "altas",
+                dia
             );
 
 
-        botao.type =
-            "button";
-
-        botao.className =
-            "day-button";
-
-
-        const chave =
-            montarChaveDia(
-                dia,
-                mesSelecionado,
-                anoSelecionado
+        const evasao =
+            obterValor(
+                especialidade,
+                "evasao",
+                dia
             );
 
 
-        const preenchido =
-            Boolean(
-                censosTemporarios[chave]
+        const obitosMenor24 =
+            obterValor(
+                especialidade,
+                "obitosMenor24",
+                dia
             );
 
 
-        botao.classList.add(
-            preenchido
-                ? "completed"
-                : "pending"
-        );
+        const obitosMaior24 =
+            obterValor(
+                especialidade,
+                "obitosMaior24",
+                dia
+            );
 
 
-        botao.innerHTML = `
-            <strong>
-                ${dia}
-            </strong>
-
-            <span>
-                ${
-                    preenchido
-                        ? "Preenchido"
-                        : "Pendente"
-                }
-            </span>
-        `;
+        const transfExternas =
+            obterValor(
+                especialidade,
+                "transfExternas",
+                dia
+            );
 
 
-        botao.addEventListener(
-            "click",
-            () => {
+        const transfInternas =
+            obterValor(
+                especialidade,
+                "transfInternas",
+                dia
+            );
 
-                selecionarDia(
-                    dia,
-                    botao
+
+        const admissao =
+            obterValor(
+                especialidade,
+                "admissao",
+                dia
+            );
+                    /* =================================================
+           Nº DE SAÍDAS / DIA
+
+           Saídas:
+           - Altas
+           - Evasão
+           - Óbitos < 24h
+           - Óbitos > 24h
+           - Transferências externas
+
+           Transferência interna fica registrada,
+           mas não entra como saída hospitalar.
+        ================================================= */
+
+        const numeroSaidas =
+            altas +
+            evasao +
+            obitosMenor24 +
+            obitosMaior24 +
+            transfExternas;
+
+
+        /* =================================================
+           ÓBITOS TOTAL
+        ================================================= */
+
+        const obitosTotal =
+            obitosMenor24 +
+            obitosMaior24;
+
+
+        /* =================================================
+           ENCONTRO
+
+           DIA 1:
+           preenchido manualmente.
+
+           DIA 2 EM DIANTE:
+           DEIXO do dia anterior
+           +
+           ADMISSÃO do dia atual.
+
+           Exemplo:
+
+           Dia 1
+           Encontro = 30
+           Saídas = 4
+           Deixo = 26
+
+           Dia 2
+           Admissão = 3
+           Encontro = 26 + 3 = 29
+        ================================================= */
+
+        let encontro;
+
+
+        if (
+            dia === 1
+        ) {
+
+            encontro =
+                obterValor(
+                    especialidade,
+                    "encontro",
+                    dia
                 );
 
-            }
+        }
+
+        else {
+
+            encontro =
+                deixoAnterior +
+                admissao;
+
+        }
+
+
+        /* =================================================
+           DEIXO
+
+           DEIXO =
+           ENCONTRO - Nº DE SAÍDAS
+        ================================================= */
+
+        const deixo =
+            Math.max(
+                0,
+                encontro -
+                numeroSaidas
+            );
+
+
+        /* =================================================
+           PACIENTES / DIA
+
+           Acompanha o saldo final daquele dia.
+        ================================================= */
+
+        const pacientesDia =
+            deixo;
+
+
+        /* =================================================
+           MOSTRAR ENCONTRO AUTOMÁTICO
+
+           O encontro do DIA 1 não é alterado
+           porque ele é manual.
+
+           Do DIA 2 em diante mostramos
+           o valor calculado.
+        ================================================= */
+
+        if (
+            dia > 1
+        ) {
+
+            definirValorAutomatico(
+                especialidade,
+                "encontro",
+                dia,
+                encontro
+            );
+
+        }
+
+
+        /* =================================================
+           MOSTRAR Nº DE SAÍDAS
+        ================================================= */
+
+        definirValorAutomatico(
+            especialidade,
+            "numeroSaidas",
+            dia,
+            numeroSaidas
         );
 
 
-        daysGrid.appendChild(
-            botao
+        /* =================================================
+           MOSTRAR ÓBITOS TOTAL
+        ================================================= */
+
+        definirValorAutomatico(
+            especialidade,
+            "obitosTotal",
+            dia,
+            obitosTotal
         );
+
+
+        /* =================================================
+           MOSTRAR DEIXO
+        ================================================= */
+
+        definirValorAutomatico(
+            especialidade,
+            "deixo",
+            dia,
+            deixo
+        );
+
+
+        /* =================================================
+           MOSTRAR PACIENTES / DIA
+        ================================================= */
+
+        definirValorAutomatico(
+            especialidade,
+            "pacientesDia",
+            dia,
+            pacientesDia
+        );
+
+
+        /* =================================================
+           GUARDAR CÁLCULOS NA MEMÓRIA
+        ================================================= */
+
+        salvarValorMemoria(
+            especialidade,
+            "encontroCalculado",
+            dia,
+            encontro
+        );
+
+
+        salvarValorMemoria(
+            especialidade,
+            "numeroSaidas",
+            dia,
+            numeroSaidas
+        );
+
+
+        salvarValorMemoria(
+            especialidade,
+            "obitosTotal",
+            dia,
+            obitosTotal
+        );
+
+
+        salvarValorMemoria(
+            especialidade,
+            "deixo",
+            dia,
+            deixo
+        );
+
+
+        salvarValorMemoria(
+            especialidade,
+            "pacientesDia",
+            dia,
+            pacientesDia
+        );
+
+
+        /*
+         * MUITO IMPORTANTE:
+         *
+         * O DEIXO calculado neste dia
+         * vira a base do ENCONTRO
+         * do próximo dia.
+         */
+
+        deixoAnterior =
+            deixo;
 
     }
 
 }
 
 
-/* =========================================
-   SELECIONAR DIA
-========================================= */
+/* =========================================================
+   DEFINIR VALOR AUTOMÁTICO NA TABELA
+========================================================= */
 
-function selecionarDia(
+function definirValorAutomatico(
+    especialidade,
+    campo,
     dia,
-    botao
+    valor
 ) {
 
-    diaSelecionado =
-        dia;
-
-
-    /* IMPORTANTE:
-       controla o Encontro manual do dia 1 */
-
-    atualizarCampoEncontroInicial();
-
-
-    document
-        .querySelectorAll(
-            ".day-button"
-        )
-        .forEach(item => {
-
-            item.classList.remove(
-                "selected"
-            );
-
-        });
-
-
-    botao.classList.add(
-        "selected"
-    );
-
-
-    chooseDayMessage.classList.add(
-        "hidden"
-    );
-
-    censoFormArea.classList.remove(
-        "hidden"
-    );
-
-
-    activeDateText.textContent =
-        `${dia} de ${meses[mesSelecionado - 1]} de ${anoSelecionado}`;
-
-
-    const podeEditar =
-        periodoPodeSerEditado(
-            mesSelecionado,
-            anoSelecionado
+    const td =
+        document.querySelector(
+            `td[data-specialty="${especialidade}"][data-field="${campo}"][data-day="${dia}"]`
         );
 
 
-    aplicarModoEdicao(
-        podeEditar
+    if (!td) {
+
+        return;
+
+    }
+
+
+    /*
+     * ENCONTRO DO DIA 1
+     * possui INPUT manual.
+     *
+     * Portanto não substituímos
+     * o conteúdo da célula.
+     */
+
+    if (
+        campo === "encontro" &&
+        dia === 1
+    ) {
+
+        return;
+
+    }
+
+
+    td.textContent =
+        String(
+            numero(
+                valor
+            )
+        );
+
+}
+
+
+/* =========================================================
+   OBTER VALOR DE UM CAMPO
+========================================================= */
+
+function obterValor(
+    especialidade,
+    campo,
+    dia
+) {
+
+    /*
+     * Primeiro procura um INPUT.
+     *
+     * Isso garante que estamos usando
+     * imediatamente o que o usuário digitou.
+     */
+
+    const input =
+        document.querySelector(
+            `input[data-specialty="${especialidade}"][data-field="${campo}"][data-day="${dia}"]`
+        );
+
+
+    if (input) {
+
+        return obterNumeroInput(
+            input
+        );
+
+    }
+
+
+    /*
+     * Se não existir INPUT,
+     * procura na memória.
+     */
+
+    return numero(
+        dadosMes
+            ?.[especialidade]
+            ?.[dia]
+            ?.[campo]
     );
 
+}
 
-    carregarCensoDia();
 
+/* =========================================================
+   RECALCULAR TOTAIS DOS BLOCOS
+========================================================= */
 
-    document
-        .querySelectorAll(
-            ".specialty-card"
+function recalcularTotais() {
+
+    Object
+        .entries(
+            gruposEspecialidades
         )
         .forEach(
-            (card, index) => {
+            ([
+                grupo,
+                especialidades
+            ]) => {
 
-                card.open =
-                    index === 0;
+                for (
+                    let dia = 1;
+                    dia <= quantidadeDias;
+                    dia++
+                ) {
+
+                    let totalDiarias =
+                        0;
+
+
+                    let totalObitos =
+                        0;
+
+
+                    especialidades.forEach(
+                        especialidade => {
+
+                            /*
+                             * TOTAL DE DIÁRIAS
+                             *
+                             * Soma Pacientes/Dia
+                             * das especialidades
+                             * daquele bloco.
+                             */
+
+                            totalDiarias +=
+                                numero(
+                                    dadosMes
+                                        ?.[especialidade]
+                                        ?.[dia]
+                                        ?.pacientesDia
+                                );
+
+
+                            /*
+                             * ÓBITOS TOTAL
+                             *
+                             * Soma os óbitos totais
+                             * das especialidades.
+                             */
+
+                            totalObitos +=
+                                numero(
+                                    dadosMes
+                                        ?.[especialidade]
+                                        ?.[dia]
+                                        ?.obitosTotal
+                                );
+
+                        }
+                    );
+
+
+                    definirTotalGrupo(
+                        grupo,
+                        "diarias",
+                        dia,
+                        totalDiarias
+                    );
+
+
+                    definirTotalGrupo(
+                        grupo,
+                        "obitos",
+                        dia,
+                        totalObitos
+                    );
+
+                }
 
             }
         );
@@ -357,83 +1286,497 @@ function selecionarDia(
 }
 
 
-/* =========================================
-   CAMPO ENCONTRO DO PRIMEIRO DIA
-========================================= */
+/* =========================================================
+   DEFINIR TOTAL NA PLANILHA
+========================================================= */
 
-function atualizarCampoEncontroInicial() {
+function definirTotalGrupo(
+    grupo,
+    campo,
+    dia,
+    valor
+) {
 
-    const primeiroDia =
-        diaSelecionado === 1;
+    const td =
+        document.querySelector(
+            `td[data-total-group="${grupo}"][data-total-field="${campo}"][data-day="${dia}"]`
+        );
 
 
-    /*
-       DIA 1:
-       mostra input Encontro.
+    if (td) {
 
-       DIA 2+:
-       esconde input Encontro.
-    */
-
-    document
-        .querySelectorAll(
-            "[data-encontro-manual]"
-        )
-        .forEach(campo => {
-
-            campo.classList.toggle(
-                "hidden",
-                !primeiroDia
+        td.textContent =
+            String(
+                numero(
+                    valor
+                )
             );
 
-        });
-
-
-    /*
-       DIA 1:
-       não mostramos "Deixo do dia anterior".
-
-       DIA 2+:
-       mostramos normalmente.
-    */
-
-    document
-        .querySelectorAll(
-            "[data-previous-day-note], .previous-day-note"
-        )
-        .forEach(aviso => {
-
-            aviso.classList.toggle(
-                "hidden",
-                primeiroDia
-            );
-
-        });
+    }
 
 }
 
 
-/* =========================================
-   TERCEIRO DIA ÚTIL DO MÊS SEGUINTE
-========================================= */
+/* =========================================================
+   SALVAR VALOR NA MEMÓRIA
+========================================================= */
 
-function obterDataLimiteEdicao(
+function salvarValorMemoria(
+    especialidade,
+    campo,
+    dia,
+    valor
+) {
+
+    /*
+     * Se ainda não existir a especialidade,
+     * criamos.
+     */
+
+    if (
+        !dadosMes[
+            especialidade
+        ]
+    ) {
+
+        dadosMes[
+            especialidade
+        ] = {};
+
+    }
+
+
+    /*
+     * Se ainda não existir o dia,
+     * criamos.
+     */
+
+    if (
+        !dadosMes[
+            especialidade
+        ][dia]
+    ) {
+
+        dadosMes[
+            especialidade
+        ][dia] = {};
+
+    }
+
+
+    /*
+     * Salva o campo.
+     */
+
+    dadosMes[
+        especialidade
+    ][dia][campo] =
+        numero(
+            valor
+        );
+
+}
+
+
+/* =========================================================
+   OBTER VALOR JÁ SALVO
+========================================================= */
+
+function obterValorSalvo(
+    especialidade,
+    campo,
+    dia
+) {
+
+    return numero(
+        dadosMes
+            ?.[especialidade]
+            ?.[dia]
+            ?.[campo]
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZAR INPUT
+========================================================= */
+
+function normalizarInput(
+    input
+) {
+
+    let valor =
+        Number(
+            input.value
+        );
+
+
+    /*
+     * Não aceita:
+     *
+     * negativo
+     * NaN
+     * infinito
+     */
+
+    if (
+        !Number.isFinite(
+            valor
+        ) ||
+        valor < 0
+    ) {
+
+        valor =
+            0;
+
+    }
+
+
+    /*
+     * Censo trabalha com
+     * número inteiro de pacientes.
+     */
+
+    valor =
+        Math.floor(
+            valor
+        );
+
+
+    input.value =
+        String(
+            valor
+        );
+
+}
+
+
+/* =========================================================
+   PEGAR NÚMERO DO INPUT
+========================================================= */
+
+function obterNumeroInput(
+    input
+) {
+
+    return numero(
+        input.value
+    );
+
+}
+
+
+/* =========================================================
+   SALVAR CENSO
+========================================================= */
+
+function salvarCenso() {
+
+    if (
+        !anoSelecionado ||
+        !mesSelecionado
+    ) {
+
+        alert(
+            "Selecione o mês de referência."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !periodoAberto
+    ) {
+
+        alert(
+            "Este período está encerrado para alterações."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Primeiro atualizamos a memória
+     * com tudo que está nos inputs.
+     */
+
+    sincronizarInputsComMemoria();
+
+
+    /*
+     * Recalcula antes de salvar.
+     */
+
+    recalcularTudo();
+
+
+    const registro = {
+
+        setor:
+            String(
+                usuarioLogado.setor ||
+                ""
+            ),
+
+        usuario:
+            String(
+                usuarioLogado.nome ||
+                ""
+            ),
+
+        perfil:
+            String(
+                usuarioLogado.perfil ||
+                ""
+            ),
+
+        ano:
+            anoSelecionado,
+
+        mes:
+            mesSelecionado,
+
+        dados:
+            dadosMes,
+
+        atualizadoEm:
+            new Date()
+                .toISOString()
+
+    };
+
+
+    /*
+     * POR ENQUANTO:
+     *
+     * salva no navegador.
+     *
+     * Depois esta parte será substituída
+     * pela chamada ao Google Apps Script
+     * para gravar no Google Sheets.
+     */
+
+    localStorage.setItem(
+        obterChaveStorage(),
+        JSON.stringify(
+            registro
+        )
+    );
+
+
+    mostrarFeedbackSalvo();
+
+}
+
+
+/* =========================================================
+   SINCRONIZAR TODOS OS INPUTS
+========================================================= */
+
+function sincronizarInputsComMemoria() {
+
+    document
+        .querySelectorAll(
+            ".censo-cell-input"
+        )
+        .forEach(
+            input => {
+
+                const especialidade =
+                    input.dataset.specialty;
+
+
+                const campo =
+                    input.dataset.field;
+
+
+                const dia =
+                    Number(
+                        input.dataset.day
+                    );
+
+
+                const valor =
+                    obterNumeroInput(
+                        input
+                    );
+
+
+                salvarValorMemoria(
+                    especialidade,
+                    campo,
+                    dia,
+                    valor
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   CARREGAR DADOS JÁ SALVOS
+========================================================= */
+
+function carregarDadosLocais() {
+
+    const salvo =
+        localStorage.getItem(
+            obterChaveStorage()
+        );
+
+
+    /*
+     * Não existe nada salvo
+     * para esse setor/mês.
+     */
+
+    if (!salvo) {
+
+        dadosMes =
+            {};
+
+        return;
+
+    }
+
+
+    try {
+
+        const registro =
+            JSON.parse(
+                salvo
+            );
+
+
+        dadosMes =
+            registro.dados ||
+            {};
+
+    }
+
+    catch (erro) {
+
+        console.error(
+            "Erro ao carregar censo salvo:",
+            erro
+        );
+
+
+        dadosMes =
+            {};
+
+    }
+
+}
+
+
+/* =========================================================
+   CHAVE DO LOCALSTORAGE
+========================================================= */
+
+function obterChaveStorage() {
+
+    const setor =
+        normalizarChave(
+            usuarioLogado.setor
+        );
+
+
+    /*
+     * Cada setor e cada mês
+     * possui sua própria chave.
+     *
+     * Exemplo:
+     *
+     * censo_internamento_2026_08
+     */
+
+    return (
+        `censo_${setor}_${anoSelecionado}_${String(
+            mesSelecionado
+        ).padStart(
+            2,
+            "0"
+        )}`
+    );
+
+}
+/* =========================================================
+   VERIFICAR SE O PERÍODO ESTÁ ABERTO
+========================================================= */
+
+function verificarPeriodoAberto(
+    mes,
+    ano
+) {
+
+    const agora =
+        new Date();
+
+
+    const limite =
+        obterTerceiroDiaUtilMesSeguinte(
+            mes,
+            ano
+        );
+
+
+    return (
+        agora <= limite
+    );
+
+}
+
+
+/* =========================================================
+   OBTER TERCEIRO DIA ÚTIL DO MÊS SEGUINTE
+========================================================= */
+
+function obterTerceiroDiaUtilMesSeguinte(
     mes,
     ano
 ) {
 
     /*
-       Como mesSelecionado é 1-12,
-       passar "mes" diretamente para Date()
-       já cria o primeiro dia do mês seguinte.
+     * IMPORTANTE:
+     *
+     * mesSelecionado usa:
+     *
+     * 1 = Janeiro
+     * 2 = Fevereiro
+     * ...
+     * 12 = Dezembro
+     *
+     * Já o Date() do JavaScript usa:
+     *
+     * 0 = Janeiro
+     * 1 = Fevereiro
+     * ...
+     *
+     * Por isso:
+     *
+     * new Date(ano, mes, 1)
+     *
+     * já aponta para o PRIMEIRO DIA
+     * DO MÊS SEGUINTE.
+     *
+     * Exemplo:
+     *
+     * Agosto = 8
+     *
+     * new Date(2026, 8, 1)
+     *
+     * = 01/09/2026
+     */
 
-       Exemplo:
-       mes = 8 (agosto)
-       new Date(2026, 8, 1)
-       = 01/09/2026
-    */
-
-    let data =
+    const data =
         new Date(
             ano,
             mes,
@@ -453,12 +1796,19 @@ function obterDataLimiteEdicao(
             data.getDay();
 
 
+        /*
+         * 0 = domingo
+         * 6 = sábado
+         */
+
         const ehDiaUtil =
             diaSemana !== 0 &&
             diaSemana !== 6;
 
 
-        if (ehDiaUtil) {
+        if (
+            ehDiaUtil
+        ) {
 
             diasUteis++;
 
@@ -478,6 +1828,11 @@ function obterDataLimiteEdicao(
     }
 
 
+    /*
+     * O sistema permanece aberto
+     * até 23:59:59 do terceiro dia útil.
+     */
+
     data.setHours(
         23,
         59,
@@ -491,1616 +1846,331 @@ function obterDataLimiteEdicao(
 }
 
 
-/* =========================================
-   VERIFICAR SE PODE EDITAR
-========================================= */
+/* =========================================================
+   APLICAR ESTADO DO PERÍODO NA TELA
+========================================================= */
 
-function periodoPodeSerEditado(
-    mes,
-    ano
-) {
-
-    const agora =
-        new Date();
-
+function aplicarEstadoPeriodo() {
 
     const limite =
-        obterDataLimiteEdicao(
-            mes,
-            ano
-        );
-
-
-    return agora <= limite;
-
-}
-
-
-/* =========================================
-   ATUALIZAR PRAZO
-========================================= */
-
-function atualizarPrazo() {
-
-    const limite =
-        obterDataLimiteEdicao(
+        obterTerceiroDiaUtilMesSeguinte(
             mesSelecionado,
             anoSelecionado
         );
 
 
-    const aberto =
-        periodoPodeSerEditado(
-            mesSelecionado,
-            anoSelecionado
-        );
-
-
-    if (aberto) {
-
-        deadlineText.textContent =
-            `Alterações permitidas até ${formatarData(limite)}.`;
-
-
-        periodDeadline.classList.remove(
-            "closed"
-        );
-
-    } else {
-
-        deadlineText.textContent =
-            `Período encerrado em ${formatarData(limite)}. Disponível apenas para consulta.`;
-
-
-        periodDeadline.classList.add(
-            "closed"
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   MODO DE EDIÇÃO
-========================================= */
-
-function aplicarModoEdicao(
-    podeEditar
-) {
-
-    const campos =
-        document.querySelectorAll(
-            ".specialty-content input"
-        );
-
-
-    campos.forEach(
-        input => {
-
-            input.disabled =
-                !podeEditar;
-
-        }
-    );
-
-
-    saveCenso.disabled =
-        !podeEditar;
-
-
-    if (podeEditar) {
-
-        editStatus.textContent =
-            "Período aberto";
-
-        editStatus.className =
-            "edit-status open";
-
-
-        saveCenso.innerHTML = `
-            <i class="fa-regular fa-floppy-disk"></i>
-            Salvar Censo
-        `;
-
-    } else {
-
-        editStatus.textContent =
-            "Somente consulta";
-
-        editStatus.className =
-            "edit-status closed";
-
-
-        saveCenso.innerHTML = `
-            <i class="fa-solid fa-lock"></i>
-            Período Encerrado
-        `;
-
-    }
-
-}
-
-
-/* =========================================
-   EVENTOS DOS CAMPOS
-========================================= */
-
-document
-    .querySelectorAll(
-        ".specialty-card"
-    )
-    .forEach(
-        card => {
-
-            card
-                .querySelectorAll(
-                    'input[type="number"]'
-                )
-                .forEach(
-                    input => {
-
-                        input.addEventListener(
-                            "input",
-                            () => {
-
-                                normalizarCampo(
-                                    input
-                                );
-
-
-                                calcularEspecialidade(
-                                    card
-                                );
-
-
-                                marcarEspecialidade(
-                                    card
-                                );
-
-
-                                calcularTotaisGrupos();
-
-                            }
-                        );
-
-                    }
-                );
-
-        }
-    );
-
-
-/* =========================================
-   NORMALIZAR CAMPO
-========================================= */
-
-function normalizarCampo(
-    input
-) {
-
-    const valor =
-        Number(
-            input.value
-        );
-
+    /* =====================================================
+       PERÍODO ABERTO
+    ===================================================== */
 
     if (
-        !Number.isFinite(valor) ||
-        valor < 0
+        periodoAberto
     ) {
 
-        input.value =
-            0;
-
-    }
-
-}
-
-
-/* =========================================
-   CALCULAR ESPECIALIDADE
-
-   REGRA CORRETA DA PLANILHA
-========================================= */
-
-function calcularEspecialidade(
-    card
-) {
-
-    const altas =
-        lerCampo(
-            card,
-            "altas"
-        );
-
-    const evasao =
-        lerCampo(
-            card,
-            "evasao"
-        );
-
-    const obitosMenor24 =
-        lerCampo(
-            card,
-            "obitosMenor24"
-        );
-
-    const obitosMaior24 =
-        lerCampo(
-            card,
-            "obitosMaior24"
-        );
-
-    const transfExternas =
-        lerCampo(
-            card,
-            "transfExternas"
-        );
-
-    const transfInternas =
-        lerCampo(
-            card,
-            "transfInternas"
-        );
-
-    const admissao =
-        lerCampo(
-            card,
-            "admissao"
-        );
-
-
-    /* =====================================
-       ENCONTRO
-    ===================================== */
-
-    let encontro = 0;
-
-
-    /*
-       DIA 1
-
-       O coordenador informa manualmente
-       o encontro inicial.
-    */
-
-    if (
-        diaSelecionado === 1
-    ) {
-
-        encontro =
-            lerCampo(
-                card,
-                "encontroManual"
+        deadlineBox
+            ?.classList
+            .remove(
+                "closed"
             );
 
+
+        if (
+            deadlineIcon
+        ) {
+
+            deadlineIcon.className =
+                "fa-solid fa-lock-open";
+
+        }
+
+
+        if (
+            deadlineText
+        ) {
+
+            deadlineText.textContent =
+                `Aberto até ${formatarData(limite)}`;
+
+        }
+
+
+        definirBotoesSalvar(
+            false
+        );
+
     }
 
 
-    /*
-       DIA 2 EM DIANTE
-
-       Encontro recebe EXATAMENTE
-       o Deixo do dia anterior.
-
-       NÃO soma admissão aqui.
-    */
+    /* =====================================================
+       PERÍODO ENCERRADO
+    ===================================================== */
 
     else {
 
-        encontro =
-            Number(
-                card
-                    .querySelector(
-                        "[data-deixo-anterior]"
-                    )
-                    ?.textContent
-            ) || 0;
+        deadlineBox
+            ?.classList
+            .add(
+                "closed"
+            );
+
+
+        if (
+            deadlineIcon
+        ) {
+
+            deadlineIcon.className =
+                "fa-solid fa-lock";
+
+        }
+
+
+        if (
+            deadlineText
+        ) {
+
+            deadlineText.textContent =
+                `Encerrado em ${formatarData(limite)}`;
+
+        }
+
+
+        definirBotoesSalvar(
+            true
+        );
 
     }
 
 
-    /* =====================================
-       ÓBITOS TOTAL
-    ===================================== */
+    /* =====================================================
+       BLOQUEAR / LIBERAR INPUTS
+    ===================================================== */
 
-    const obitosTotal =
-        obitosMenor24 +
-        obitosMaior24;
-
-
-    /* =====================================
-       Nº SAÍDAS / DIA
-
-       Igual à sua planilha:
-
-       Altas
-       + Evasão
-       + Óbitos <24
-       + Óbitos >24
-       + Transferência externa
-       + Transferência interna
-    ===================================== */
-
-    const saidas =
-        altas +
-        evasao +
-        obitosMenor24 +
-        obitosMaior24 +
-        transfExternas +
-        transfInternas;
-
-
-    /* =====================================
-       DEIXO
-
-       Fórmula:
-
-       DEIXO =
-       ENCONTRO
-       - SAÍDAS
-       + ADMISSÃO
-
-       Equivalente à planilha:
-
-       = B5 -
-       (B6+B7+B8+B9+B10+B11)
-       + B12
-    ===================================== */
-
-    const deixo =
-        encontro
-        - saidas
-        + admissao;
-
-
-    /* =====================================
-       MOSTRAR RESULTADOS
-    ===================================== */
-
-    const encontroElemento =
-        card.querySelector(
-            "[data-encontro]"
-        );
-
-    const saidasElemento =
-        card.querySelector(
-            "[data-saidas]"
-        );
-
-    const obitosElemento =
-        card.querySelector(
-            "[data-obitos-total]"
-        );
-
-    const deixoElemento =
-        card.querySelector(
-            "[data-deixo]"
-        );
-
-
-    if (encontroElemento) {
-
-        encontroElemento.textContent =
-            encontro;
-
-    }
-
-
-    if (saidasElemento) {
-
-        saidasElemento.textContent =
-            saidas;
-
-    }
-
-
-    if (obitosElemento) {
-
-        obitosElemento.textContent =
-            obitosTotal;
-
-    }
-
-
-    if (deixoElemento) {
-
-        deixoElemento.textContent =
-            deixo;
-
-    }
-
-}
-
-
-/* =========================================
-   LER CAMPO
-========================================= */
-
-function lerCampo(
-    card,
-    campo
-) {
-
-    const input =
-        card.querySelector(
-            `[data-field="${campo}"]`
-        );
-
-
-    return (
-        Number(
-            input?.value
-        ) || 0
-    );
-
-}
-/* =========================================
-   STATUS DA ESPECIALIDADE
-========================================= */
-
-function marcarEspecialidade(
-    card
-) {
-
-    const status =
-        card.querySelector(
-            "[data-status]"
-        );
-
-
-    if (!status) {
-
-        return;
-
-    }
-
-
-    const possuiMovimento =
-        [
-            ...card.querySelectorAll(
-                "[data-field]"
-            )
-        ]
-        .some(
+    document
+        .querySelectorAll(
+            ".censo-cell-input"
+        )
+        .forEach(
             input => {
 
-                return (
-                    Number(
-                        input.value
-                    ) > 0
-                );
+                input.disabled =
+                    !periodoAberto;
 
             }
         );
 
-
-    if (possuiMovimento) {
-
-        status.textContent =
-            "Preenchido";
-
-
-        status.classList.add(
-            "filled"
-        );
-
-    } else {
-
-        status.textContent =
-            "Não preenchido";
-
-
-        status.classList.remove(
-            "filled"
-        );
-
-    }
-
 }
 
 
-/* =========================================
-   TOTAL DOS GRUPOS
-========================================= */
+/* =========================================================
+   HABILITAR / DESABILITAR BOTÕES SALVAR
+========================================================= */
 
-function calcularTotaisGrupos() {
-
-    if (totalClinicaMedica) {
-
-        totalClinicaMedica.textContent =
-            somarDeixosDoGrupo(
-                "clinica-medica"
-            );
-
-    }
-
-
-    if (totalClinicaCirurgica) {
-
-        totalClinicaCirurgica.textContent =
-            somarDeixosDoGrupo(
-                "clinica-cirurgica"
-            );
-
-    }
-
-}
-
-
-/* =========================================
-   SOMAR DEIXOS
-========================================= */
-
-function somarDeixosDoGrupo(
-    grupo
+function definirBotoesSalvar(
+    desabilitado
 ) {
 
-    const section =
-        document.querySelector(
-            `[data-group="${grupo}"]`
+    const botoes = [
+
+        saveCenso,
+
+        saveCensoBottom
+
+    ];
+
+
+    botoes
+        .filter(Boolean)
+        .forEach(
+            botao => {
+
+                botao.disabled =
+                    desabilitado;
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   FEEDBACK VISUAL AO SALVAR
+========================================================= */
+
+function mostrarFeedbackSalvo() {
+
+    const botoes = [
+
+        saveCenso,
+
+        saveCensoBottom
+
+    ]
+    .filter(Boolean);
+
+
+    /*
+     * Mostra confirmação.
+     */
+
+    botoes.forEach(
+        botao => {
+
+            botao.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                <span>Alterações salvas</span>
+            `;
+
+        }
+    );
+
+
+    /*
+     * Depois volta para o texto normal.
+     */
+
+    setTimeout(
+        () => {
+
+            botoes.forEach(
+                botao => {
+
+                    botao.innerHTML = `
+                        <i class="fa-regular fa-floppy-disk"></i>
+                        <span>Salvar alterações</span>
+                    `;
+
+                }
+            );
+
+        },
+        1600
+    );
+
+}
+
+
+/* =========================================================
+   DESTACAR DIA ATUAL
+========================================================= */
+
+function aplicarDestaqueDiaAtual(
+    elemento,
+    dia
+) {
+
+    const hoje =
+        new Date();
+
+
+    const ehHoje =
+
+        hoje.getFullYear() ===
+            anoSelecionado
+
+        &&
+
+        hoje.getMonth() + 1 ===
+            mesSelecionado
+
+        &&
+
+        hoje.getDate() ===
+            dia;
+
+
+    if (
+        ehHoje
+    ) {
+
+        elemento.classList.add(
+            "today-cell"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function sair() {
+
+    /*
+     * Remove o usuário da sessão.
+     */
+
+    sessionStorage.removeItem(
+        "usuarioLogado"
+    );
+
+
+    /*
+     * Retorna para o login.
+     */
+
+    window.location.href =
+        "./index.html";
+
+}
+
+
+/* =========================================================
+   CONVERTER PARA NÚMERO
+========================================================= */
+
+function numero(
+    valor
+) {
+
+    const convertido =
+        Number(
+            valor
         );
 
 
-    if (!section) {
+    /*
+     * Evita:
+     *
+     * NaN
+     * undefined
+     * null inválido
+     * infinito
+     */
+
+    if (
+        !Number.isFinite(
+            convertido
+        )
+    ) {
 
         return 0;
 
     }
 
 
-    let total = 0;
-
-
-    section
-        .querySelectorAll(
-            ".specialty-card"
-        )
-        .forEach(
-            card => {
-
-                const elemento =
-                    card.querySelector(
-                        "[data-deixo]"
-                    );
-
-
-                total +=
-                    Number(
-                        elemento?.textContent
-                    ) || 0;
-
-            }
-        );
-
-
-    return total;
-
-}
-
-
-/* =========================================
-   CARREGAR CENSO DO DIA
-========================================= */
-/* =========================================
-   CARREGAR CENSO DO DIA
-========================================= */
-
-function carregarCensoDia() {
-
-    limparFormulario();
-
-
-    const chave =
-        montarChaveDia(
-            diaSelecionado,
-            mesSelecionado,
-            anoSelecionado
-        );
-
-
-    const salvo =
-        censosTemporarios[chave];
-
-
     /*
-       Se já existe algo salvo/rascunho
-       para esse dia, preenche os campos.
-    */
+     * Não permite número negativo.
+     *
+     * Também força número inteiro,
+     * pois estamos trabalhando
+     * com quantidade de pacientes.
+     */
 
-    if (salvo) {
-
-        preencherFormulario(
-            salvo
-        );
-
-    }
-
-
-    /*
-       Depois calcula toda a cadeia
-       até o dia selecionado.
-    */
-
-    atualizarEncontroDoDiaAtual();
-
-
-    document
-        .querySelectorAll(
-            ".specialty-card"
+    return Math.max(
+        0,
+        Math.floor(
+            convertido
         )
-        .forEach(card => {
-
-            calcularEspecialidade(
-                card
-            );
-
-            marcarEspecialidade(
-                card
-            );
-
-        });
-
-
-    calcularTotaisGrupos();
+    );
 
 }
 
 
-/* =========================================
-   LIMPAR FORMULÁRIO
-========================================= */
-
-function limparFormulario() {
-
-    document
-        .querySelectorAll(
-            '.specialty-content input[type="number"]'
-        )
-        .forEach(input => {
-
-            input.value = 0;
-
-        });
-
-
-    document
-        .querySelectorAll(
-            `
-                [data-encontro],
-                [data-saidas],
-                [data-obitos-total],
-                [data-deixo]
-            `
-        )
-        .forEach(elemento => {
-
-            elemento.textContent =
-                "0";
-
-        });
-
-
-    document
-        .querySelectorAll(
-            "[data-deixo-anterior]"
-        )
-        .forEach(elemento => {
-
-            elemento.textContent =
-                "0";
-
-        });
-
-}
-
-
-/* =========================================
-   CALCULAR ESTADO DA ESPECIALIDADE
-   ATÉ DETERMINADO DIA
-
-   DIA 1:
-   Encontro manual.
-
-   DIA 2+:
-   Encontro = Deixo anterior.
-========================================= */
-
-function calcularEstadoAteDia(
-    diaDestino,
-    especialidade
-) {
-
-    let encontro = 0;
-    let deixo = 0;
-
-
-    for (
-        let dia = 1;
-        dia <= diaDestino;
-        dia++
-    ) {
-
-        const chave =
-            montarChaveDia(
-                dia,
-                mesSelecionado,
-                anoSelecionado
-            );
-
-
-        const registro =
-            censosTemporarios[chave]
-                ?.especialidades
-                ?.[especialidade];
-
-
-        /* =====================================
-           ENCONTRO
-        ===================================== */
-
-        if (dia === 1) {
-
-            encontro =
-                Number(
-                    registro
-                        ?.encontroManual
-                ) || 0;
-
-        } else {
-
-            encontro =
-                deixo;
-
-        }
-
-
-        /* =====================================
-           MOVIMENTAÇÕES
-        ===================================== */
-
-        const altas =
-            Number(
-                registro?.altas
-            ) || 0;
-
-
-        const evasao =
-            Number(
-                registro?.evasao
-            ) || 0;
-
-
-        const obitosMenor24 =
-            Number(
-                registro?.obitosMenor24
-            ) || 0;
-
-
-        const obitosMaior24 =
-            Number(
-                registro?.obitosMaior24
-            ) || 0;
-
-
-        const transfExternas =
-            Number(
-                registro?.transfExternas
-            ) || 0;
-
-
-        const transfInternas =
-            Number(
-                registro?.transfInternas
-            ) || 0;
-
-
-        const admissao =
-            Number(
-                registro?.admissao
-            ) || 0;
-
-
-        /* =====================================
-           SAÍDAS
-        ===================================== */
-
-        const saidas =
-            altas +
-            evasao +
-            obitosMenor24 +
-            obitosMaior24 +
-            transfExternas +
-            transfInternas;
-
-
-        /* =====================================
-           DEIXO
-
-           ENCONTRO
-           - SAÍDAS
-           + ADMISSÃO
-        ===================================== */
-
-        deixo =
-            encontro
-            - saidas
-            + admissao;
-
-    }
-
-
-    return {
-        encontro,
-        deixo
-    };
-
-}
-
-
-/* =========================================
-   ATUALIZAR ENCONTRO DO DIA ATUAL
-========================================= */
-
-function atualizarEncontroDoDiaAtual() {
-
-    document
-        .querySelectorAll(
-            ".specialty-card"
-        )
-        .forEach(card => {
-
-            const especialidade =
-                card.dataset
-                    .especialidade;
-
-
-            const deixoAnteriorElemento =
-                card.querySelector(
-                    "[data-deixo-anterior]"
-                );
-
-
-            /*
-               DIA 1:
-
-               Não existe Deixo anterior.
-               O Encontro será digitado.
-            */
-
-            if (
-                diaSelecionado === 1
-            ) {
-
-                if (
-                    deixoAnteriorElemento
-                ) {
-
-                    deixoAnteriorElemento
-                        .textContent =
-                        "0";
-
-                }
-
-                return;
-
-            }
-
-
-            /*
-               DIA 2+:
-
-               Calcula toda a cadeia
-               desde o dia 1 até ontem.
-            */
-
-            const estadoAnterior =
-                calcularEstadoAteDia(
-                    diaSelecionado - 1,
-                    especialidade
-                );
-
-
-            if (
-                deixoAnteriorElemento
-            ) {
-
-                deixoAnteriorElemento
-                    .textContent =
-                    estadoAnterior.deixo;
-
-            }
-
-        });
-
-}
-
-
-/* =========================================
-   ATUALIZAR RASCUNHO DO DIA ATUAL
-
-   Isso faz a alteração refletir nos
-   próximos dias antes mesmo de salvar.
-========================================= */
-
-function atualizarRascunhoDiaAtual() {
-
-    if (
-        !diaSelecionado ||
-        !mesSelecionado ||
-        !anoSelecionado
-    ) {
-
-        return;
-
-    }
-
-
-    const chave =
-        montarChaveDia(
-            diaSelecionado,
-            mesSelecionado,
-            anoSelecionado
-        );
-
-
-    /*
-       Preserva se já estava salvo.
-    */
-
-    const registroAnterior =
-        censosTemporarios[chave];
-
-const payload = {
-
-    setor:
-        obterSetorUsuario(),
-
-    data:
-        `${anoSelecionado}-${String(
-            mesSelecionado
-        ).padStart(
-            2,
-            "0"
-        )}-${String(
-            diaSelecionado
-        ).padStart(
-            2,
-            "0"
-        )}`,
-
-    especialidades: {},
-
-    rascunho: false
-
-};
-
-
-    document
-        .querySelectorAll(
-            ".specialty-card"
-        )
-        .forEach(card => {
-
-            const slug =
-                card.dataset
-                    .especialidade;
-
-
-            payload
-                .especialidades[
-                    slug
-                ] =
-                coletarEspecialidade(
-                    card
-                );
-
-        });
-
-
-    censosTemporarios[
-        chave
-    ] =
-        payload;
-
-}
-
-
-/* =========================================
-   RECALCULAR TODOS OS DIAS POSTERIORES
-========================================= */
-
-function recalcularDiasPosteriores(
-    diaAlterado
-) {
-
-    const quantidadeDias =
-        new Date(
-            anoSelecionado,
-            mesSelecionado,
-            0
-        ).getDate();
-
-
-    /*
-       Vamos recalcular todos os registros
-       existentes depois do dia alterado.
-
-       Exemplo:
-       mudou dia 2
-       → recalcula 3, 4, 5...
-    */
-
-    for (
-        let dia = diaAlterado + 1;
-        dia <= quantidadeDias;
-        dia++
-    ) {
-
-        const chaveAtual =
-            montarChaveDia(
-                dia,
-                mesSelecionado,
-                anoSelecionado
-            );
-
-
-        const censoAtual =
-            censosTemporarios[
-                chaveAtual
-            ];
-
-
-        /*
-           Se ainda não existe movimentação
-           nesse dia, não criamos um registro.
-
-           Mesmo assim, ao abrir o dia,
-           calcularEstadoAteDia() mostrará
-           o Encontro correto.
-        */
-
-        if (!censoAtual) {
-
-            continue;
-
-        }
-
-
-        Object
-            .keys(
-                censoAtual
-                    .especialidades || {}
-            )
-            .forEach(
-                especialidade => {
-
-                    const atual =
-                        censoAtual
-                            .especialidades[
-                                especialidade
-                            ];
-
-
-                    /*
-                       Estado calculado
-                       até o dia anterior.
-                    */
-
-                    const anterior =
-                        calcularEstadoAteDia(
-                            dia - 1,
-                            especialidade
-                        );
-
-
-                    const encontro =
-                        anterior.deixo;
-
-
-                    const altas =
-                        Number(
-                            atual.altas
-                        ) || 0;
-
-
-                    const evasao =
-                        Number(
-                            atual.evasao
-                        ) || 0;
-
-
-                    const obitosMenor24 =
-                        Number(
-                            atual.obitosMenor24
-                        ) || 0;
-
-
-                    const obitosMaior24 =
-                        Number(
-                            atual.obitosMaior24
-                        ) || 0;
-
-
-                    const transfExternas =
-                        Number(
-                            atual.transfExternas
-                        ) || 0;
-
-
-                    const transfInternas =
-                        Number(
-                            atual.transfInternas
-                        ) || 0;
-
-
-                    const admissao =
-                        Number(
-                            atual.admissao
-                        ) || 0;
-
-
-                    const saidas =
-                        altas +
-                        evasao +
-                        obitosMenor24 +
-                        obitosMaior24 +
-                        transfExternas +
-                        transfInternas;
-
-
-                    const obitosTotal =
-                        obitosMenor24 +
-                        obitosMaior24;
-
-
-                    const deixo =
-                        encontro
-                        - saidas
-                        + admissao;
-
-
-                    atual.encontro =
-                        encontro;
-
-
-                    atual.numeroSaidas =
-                        saidas;
-
-
-                    atual.obitosTotal =
-                        obitosTotal;
-
-
-                    atual.deixo =
-                        deixo;
-
-                }
-            );
-
-    }
-
-}
-
-
-/* =========================================
-   SALVAR CENSO
-========================================= */
-
-saveCenso.addEventListener(
-    "click",
-    () => {
-
-        if (
-            !diaSelecionado ||
-            !mesSelecionado ||
-            !anoSelecionado
-        ) {
-
-            alert(
-                "Selecione o mês e o dia do censo."
-            );
-
-            return;
-
-        }
-
-
-        if (
-            !periodoPodeSerEditado(
-                mesSelecionado,
-                anoSelecionado
-            )
-        ) {
-
-            alert(
-                "Este período já está encerrado para alterações."
-            );
-
-            return;
-
-        }
-
-
-        const chave =
-            montarChaveDia(
-                diaSelecionado,
-                mesSelecionado,
-                anoSelecionado
-            );
-
-
-        const payload = {
-
-            data:
-                `${anoSelecionado}-${String(
-                    mesSelecionado
-                ).padStart(
-                    2,
-                    "0"
-                )}-${String(
-                    diaSelecionado
-                ).padStart(
-                    2,
-                    "0"
-                )}`,
-
-            especialidades:
-                {},
-
-            rascunho:
-                false
-
-        };
-
-
-        document
-            .querySelectorAll(
-                ".specialty-card"
-            )
-            .forEach(card => {
-
-                const slug =
-                    card.dataset
-                        .especialidade;
-
-
-                payload
-                    .especialidades[
-                        slug
-                    ] =
-                    coletarEspecialidade(
-                        card
-                    );
-
-            });
-
-
-        /*
-           SALVA O DIA
-        */
-
-        censosTemporarios[
-            chave
-        ] =
-            payload;
-
-
-        /*
-           ALTEROU UM DIA?
-
-           Recalcula toda a cadeia
-           posterior automaticamente.
-        */
-
-        recalcularDiasPosteriores(
-            diaSelecionado
-        );
-
-
-        /*
-           Atualiza calendário.
-        */
-
-        gerarDias();
-
-
-        /*
-           Mantém o dia selecionado.
-        */
-
-        const botoes =
-            document.querySelectorAll(
-                ".day-button"
-            );
-
-
-        const botaoAtual =
-            botoes[
-                diaSelecionado - 1
-            ];
-
-
-        if (botaoAtual) {
-
-            botaoAtual.classList.add(
-                "selected"
-            );
-
-        }
-
-
-        alert(
-            "Censo salvo localmente para teste."
-        );
-
-
-        console.log(
-            "Censo salvo:",
-            payload
-        );
-
-    }
-);
-
-
-/* =========================================
-   COLETAR DADOS DA ESPECIALIDADE
-========================================= */
-
-function coletarEspecialidade(
-    card
-) {
-
-    return {
-
-        encontroManual:
-            lerCampo(
-                card,
-                "encontroManual"
-            ),
-
-
-        altas:
-            lerCampo(
-                card,
-                "altas"
-            ),
-
-
-        evasao:
-            lerCampo(
-                card,
-                "evasao"
-            ),
-
-
-        obitosMenor24:
-            lerCampo(
-                card,
-                "obitosMenor24"
-            ),
-
-
-        obitosMaior24:
-            lerCampo(
-                card,
-                "obitosMaior24"
-            ),
-
-
-        transfExternas:
-            lerCampo(
-                card,
-                "transfExternas"
-            ),
-
-
-        transfInternas:
-            lerCampo(
-                card,
-                "transfInternas"
-            ),
-
-
-        admissao:
-            lerCampo(
-                card,
-                "admissao"
-            ),
-
-
-        leitoIsolamento:
-            lerCampo(
-                card,
-                "leitoIsolamento"
-            ),
-
-
-        leitoManutencao:
-            lerCampo(
-                card,
-                "leitoManutencao"
-            ),
-
-
-        encontro:
-            Number(
-                card
-                    .querySelector(
-                        "[data-encontro]"
-                    )
-                    ?.textContent
-            ) || 0,
-
-
-        numeroSaidas:
-            Number(
-                card
-                    .querySelector(
-                        "[data-saidas]"
-                    )
-                    ?.textContent
-            ) || 0,
-
-
-        obitosTotal:
-            Number(
-                card
-                    .querySelector(
-                        "[data-obitos-total]"
-                    )
-                    ?.textContent
-            ) || 0,
-
-
-        deixo:
-            Number(
-                card
-                    .querySelector(
-                        "[data-deixo]"
-                    )
-                    ?.textContent
-            ) || 0
-
-    };
-
-}
-
-
-/* =========================================
-   PREENCHER FORMULÁRIO
-========================================= */
-
-function preencherFormulario(
-    censo
-) {
-
-    document
-        .querySelectorAll(
-            ".specialty-card"
-        )
-        .forEach(card => {
-
-            const slug =
-                card.dataset
-                    .especialidade;
-
-
-            const dados =
-                censo
-                    .especialidades
-                    ?.[slug];
-
-
-            if (!dados) {
-
-                return;
-
-            }
-
-
-            const campos = {
-
-                encontroManual:
-                    dados.encontroManual,
-
-                altas:
-                    dados.altas,
-
-                evasao:
-                    dados.evasao,
-
-                obitosMenor24:
-                    dados.obitosMenor24,
-
-                obitosMaior24:
-                    dados.obitosMaior24,
-
-                transfExternas:
-                    dados.transfExternas,
-
-                transfInternas:
-                    dados.transfInternas,
-
-                admissao:
-                    dados.admissao,
-
-                leitoIsolamento:
-                    dados.leitoIsolamento,
-
-                leitoManutencao:
-                    dados.leitoManutencao
-
-            };
-
-
-            Object.entries(
-                campos
-            )
-            .forEach(
-                ([campo, valor]) => {
-
-                    const input =
-                        card.querySelector(
-                            `[data-field="${campo}"]`
-                        );
-
-
-                    if (input) {
-
-                        input.value =
-                            Number(
-                                valor
-                            ) || 0;
-
-                    }
-
-                }
-            );
-
-        });
-
-}
-
-
-/* =========================================
-   CHAVE DA DATA
-========================================= */
-
-function montarChaveDia(
-    dia,
-    mes,
-    ano
-) {
-
-    return [
-
-        ano,
-
-        String(
-            mes
-        ).padStart(
-            2,
-            "0"
-        ),
-
-        String(
-            dia
-        ).padStart(
-            2,
-            "0"
-        )
-
-    ].join("-");
-
-}
-
-
-/* =========================================
+/* =========================================================
    FORMATAR DATA
-========================================= */
+========================================================= */
 
 function formatarData(
     data
@@ -2108,29 +2178,248 @@ function formatarData(
 
     return new Intl.DateTimeFormat(
         "pt-BR"
-    ).format(
+    )
+    .format(
         data
     );
 
 }
-function persistirCensos() {
 
-    localStorage.setItem(
-        "censosHospitalares",
-        JSON.stringify(
-            censosTemporarios
+
+/* =========================================================
+   GERAR INICIAIS DO USUÁRIO
+========================================================= */
+
+function gerarIniciais(
+    nome
+) {
+
+    const partes =
+        String(
+            nome ||
+            ""
         )
-    );
-
-}
-function obterSetorUsuario() {
-
-    const usuario =
-        JSON.parse(
-            localStorage.getItem("usuarioLogado")
+        .trim()
+        .split(
+            /\s+/
+        )
+        .filter(
+            Boolean
         );
 
 
-    return usuario?.setor || "Internamento";
+    /*
+     * Nenhum nome.
+     */
+
+    if (
+        partes.length === 0
+    ) {
+
+        return "US";
+
+    }
+
+
+    /*
+     * Apenas um nome.
+     *
+     * Exemplo:
+     *
+     * Sara
+     *
+     * SA
+     */
+
+    if (
+        partes.length === 1
+    ) {
+
+        return partes[0]
+            .substring(
+                0,
+                2
+            )
+            .toUpperCase();
+
+    }
+
+
+    /*
+     * Mais de um nome.
+     *
+     * Exemplo:
+     *
+     * Sara Silva
+     *
+     * SS
+     */
+
+    return (
+
+        partes[0]
+            .charAt(0)
+
+        +
+
+        partes[
+            partes.length - 1
+        ]
+        .charAt(0)
+
+    )
+    .toUpperCase();
 
 }
+
+
+/* =========================================================
+   FORMATAR NOME DO SETOR
+========================================================= */
+
+function formatarNomeSetor(
+    texto
+) {
+
+    return String(
+        texto ||
+        ""
+    )
+
+    .trim()
+
+    .toLowerCase()
+
+    .split(
+        /\s+/
+    )
+
+    .map(
+        palavra => {
+
+            if (
+                !palavra
+            ) {
+
+                return "";
+
+            }
+
+
+            return (
+
+                palavra
+                    .charAt(0)
+                    .toUpperCase()
+
+                +
+
+                palavra
+                    .slice(1)
+
+            );
+
+        }
+    )
+
+    .join(
+        " "
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZAR TEXTO PARA CHAVE
+========================================================= */
+
+function normalizarChave(
+    texto
+) {
+
+    return String(
+        texto ||
+        ""
+    )
+
+    .trim()
+
+    .toLowerCase()
+
+    /*
+     * Remove acentos.
+     */
+
+    .normalize(
+        "NFD"
+    )
+
+    .replace(
+        /[\u0300-\u036f]/g,
+        ""
+    )
+
+    /*
+     * Espaços viram underline.
+     */
+
+    .replace(
+        /\s+/g,
+        "_"
+    )
+
+    /*
+     * Remove caracteres especiais.
+     */
+
+    .replace(
+        /[^a-z0-9_-]/g,
+        ""
+    );
+
+}
+
+
+/* =========================================================
+   DEBUG
+========================================================= */
+
+console.log(
+    "========================================="
+);
+
+console.log(
+    "MEU CENSO CARREGADO"
+);
+
+console.log(
+    "========================================="
+);
+
+
+console.log(
+    "Usuário logado:",
+    usuarioLogado
+);
+
+
+console.log(
+    "Setor:",
+    usuarioLogado.setor
+);
+
+
+console.log(
+    "Perfil:",
+    usuarioLogado.perfil
+);
+
+
+console.log(
+    "========================================="
+);
+
+
+/* =========================================================
+   FIM - MEU CENSO
+========================================================= */

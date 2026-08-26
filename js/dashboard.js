@@ -1,3 +1,23 @@
+const usuarioLogado =
+    JSON.parse(
+        sessionStorage.getItem(
+            "usuarioLogado"
+        )
+    );
+
+
+if (!usuarioLogado) {
+
+    window.location.href =
+        "./index.html";
+
+}
+
+
+
+
+
+
 const user = {
     nome: "João Silva",
 
