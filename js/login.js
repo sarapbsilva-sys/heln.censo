@@ -1,16 +1,38 @@
-const loginForm = document.getElementById("loginForm");
-const usuarioInput = document.getElementById("usuario");
-const senhaInput = document.getElementById("senha");
-const btnLogin = document.getElementById("btnLogin");
-const loginMessage = document.getElementById("loginMessage");
-const togglePassword = document.getElementById("togglePassword");
+const loginForm =
+    document.getElementById("loginForm");
+
+const usuarioInput =
+    document.getElementById("usuario");
+
+const senhaInput =
+    document.getElementById("senha");
+
+const btnLogin =
+    document.getElementById("btnLogin");
+
+const loginMessage =
+    document.getElementById("loginMessage");
+
+const togglePassword =
+    document.getElementById("togglePassword");
+
+
+/* =========================================
+   API
+========================================= */
 
 const API_URL =
     "https://script.google.com/macros/s/AKfycby9_rpR0MimTfGA_39teRD8J-vefPcSdxwOAsSf4VcFxZtgVpcAeLOV_z0kjO6Yq4g/exec";
 
 
-console.log("LOGIN.JS CORRETO CARREGADO");
+console.log(
+    "LOGIN.JS CARREGADO"
+);
 
+
+/* =========================================
+   LOGIN
+========================================= */
 
 loginForm.addEventListener(
     "submit",
@@ -18,7 +40,18 @@ loginForm.addEventListener(
 
         event.preventDefault();
 
-        console.log("Submit capturado");
+
+        /* =====================================
+           LIMPA SESSÃO ANTIGA
+        ===================================== */
+
+        sessionStorage.removeItem(
+            "usuarioLogado"
+        );
+
+
+        limparMensagem();
+
 
         const nome =
             usuarioInput.value.trim();
@@ -27,7 +60,10 @@ loginForm.addEventListener(
             senhaInput.value.trim();
 
 
-        if (!nome || !senha) {
+        if (
+            !nome ||
+            !senha
+        ) {
 
             mostrarMensagem(
                 "Informe usuário e senha.",
@@ -40,25 +76,25 @@ loginForm.addEventListener(
 
         try {
 
-            btnLogin.disabled = true;
-
-            btnLogin.innerHTML = `
-                <span>Entrando...</span>
-                <i class="fa-solid fa-spinner fa-spin"></i>
-            `;
+            ativarCarregamento();
 
 
-            mostrarMensagem(
-                "Conectando ao servidor...",
-                ""
+            console.log(
+                "Tentando login:",
+                nome
             );
 
+
+            /* =====================================
+               CHAMADA AO APPS SCRIPT
+            ===================================== */
 
             const resposta =
                 await fetch(
                     API_URL,
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
                         headers: {
                             "Content-Type":
@@ -67,9 +103,14 @@ loginForm.addEventListener(
 
                         body:
                             JSON.stringify({
-                                acao: "login",
-                                nome: nome,
-                                senha: senha
+                                acao:
+                                    "login",
+
+                                nome:
+                                    nome,
+
+                                senha:
+                                    senha
                             })
                     }
                 );
@@ -86,10 +127,14 @@ loginForm.addEventListener(
 
 
             console.log(
-                "Resposta Apps Script:",
+                "RESPOSTA BRUTA:",
                 texto
             );
 
+
+            /* =====================================
+               CONVERTER RESPOSTA
+            ===================================== */
 
             let resultado;
 
@@ -97,18 +142,40 @@ loginForm.addEventListener(
             try {
 
                 resultado =
-                    JSON.parse(texto);
+                    JSON.parse(
+                        texto
+                    );
 
-            } catch {
+            }
+
+            catch (erro) {
+
+                console.error(
+                    "Resposta inválida:",
+                    texto
+                );
+
 
                 throw new Error(
-                    "O servidor não retornou um JSON válido."
+                    "O servidor não retornou uma resposta válida."
                 );
 
             }
 
 
-            if (!resultado.success) {
+            console.log(
+                "RESULTADO:",
+                resultado
+            );
+
+
+            /* =====================================
+               LOGIN NEGADO
+            ===================================== */
+
+            if (
+                !resultado.success
+            ) {
 
                 throw new Error(
                     resultado.message ||
@@ -118,14 +185,93 @@ loginForm.addEventListener(
             }
 
 
+            if (
+                !resultado.usuario
+            ) {
+
+                throw new Error(
+                    "Os dados do usuário não foram retornados."
+                );
+
+            }
+
+
             /* =====================================
-               SALVA USUÁRIO
+               NORMALIZAR USUÁRIO
+            ===================================== */
+
+            const usuario = {
+
+                nome:
+                    String(
+                        resultado.usuario.nome ||
+                        ""
+                    )
+                    .trim(),
+
+                perfil:
+                    normalizarPerfil(
+                        resultado.usuario.perfil
+                    ),
+
+                setor:
+                    String(
+                        resultado.usuario.setor ||
+                        ""
+                    )
+                    .trim()
+                    .toUpperCase()
+
+            };
+
+
+            /* =====================================
+               VALIDAR PERFIL
+            ===================================== */
+
+            if (
+                usuario.perfil !==
+                    "GESTAO"
+                &&
+                usuario.perfil !==
+                    "COORDENADOR"
+            ) {
+
+                console.error(
+                    "Perfil retornado:",
+                    resultado.usuario.perfil
+                );
+
+
+                throw new Error(
+                    "Perfil de usuário inválido."
+                );
+
+            }
+
+
+            /* =====================================
+               SALVAR SESSÃO
             ===================================== */
 
             sessionStorage.setItem(
                 "usuarioLogado",
                 JSON.stringify(
-                    resultado.usuario
+                    usuario
+                )
+            );
+
+
+            console.log(
+                "USUÁRIO SALVO NA SESSÃO:",
+                usuario
+            );
+
+
+            console.log(
+                "SESSION STORAGE:",
+                sessionStorage.getItem(
+                    "usuarioLogado"
                 )
             );
 
@@ -136,11 +282,9 @@ loginForm.addEventListener(
             );
 
 
-            console.log(
-                "Usuário autenticado:",
-                resultado.usuario
-            );
-
+            /* =====================================
+               REDIRECIONAR
+            ===================================== */
 
             setTimeout(
                 () => {
@@ -162,6 +306,11 @@ loginForm.addEventListener(
             );
 
 
+            sessionStorage.removeItem(
+                "usuarioLogado"
+            );
+
+
             mostrarMensagem(
                 error.message ||
                 "Erro ao realizar login.",
@@ -172,12 +321,7 @@ loginForm.addEventListener(
 
         finally {
 
-            btnLogin.disabled = false;
-
-            btnLogin.innerHTML = `
-                <span>Entrar</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            `;
+            desativarCarregamento();
 
         }
 
@@ -186,17 +330,43 @@ loginForm.addEventListener(
 
 
 /* =========================================
+   NORMALIZAR PERFIL
+========================================= */
+
+function normalizarPerfil(
+    perfil
+) {
+
+    return String(
+        perfil ||
+        ""
+    )
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(
+        /[\u0300-\u036f]/g,
+        ""
+    );
+
+}
+
+
+/* =========================================
    MOSTRAR / OCULTAR SENHA
 ========================================= */
 
-if (togglePassword) {
+if (
+    togglePassword
+) {
 
     togglePassword.addEventListener(
         "click",
         function () {
 
             const visivel =
-                senhaInput.type === "text";
+                senhaInput.type ===
+                "text";
 
 
             senhaInput.type =
@@ -206,12 +376,15 @@ if (togglePassword) {
 
 
             const icone =
-                togglePassword.querySelector(
-                    "i"
-                );
+                togglePassword
+                    .querySelector(
+                        "i"
+                    );
 
 
-            if (icone) {
+            if (
+                icone
+            ) {
 
                 icone.className =
                     visivel
@@ -220,8 +393,48 @@ if (togglePassword) {
 
             }
 
+
+            togglePassword.setAttribute(
+                "aria-label",
+                visivel
+                    ? "Mostrar senha"
+                    : "Ocultar senha"
+            );
+
         }
     );
+
+}
+
+
+/* =========================================
+   CARREGAMENTO
+========================================= */
+
+function ativarCarregamento() {
+
+    btnLogin.disabled =
+        true;
+
+
+    btnLogin.innerHTML = `
+        <span>Entrando...</span>
+        <i class="fa-solid fa-spinner fa-spin"></i>
+    `;
+
+}
+
+
+function desativarCarregamento() {
+
+    btnLogin.disabled =
+        false;
+
+
+    btnLogin.innerHTML = `
+        <span>Entrar</span>
+        <i class="fa-solid fa-arrow-right"></i>
+    `;
 
 }
 
@@ -243,12 +456,26 @@ function mostrarMensagem(
         "login-message";
 
 
-    if (tipo) {
+    if (
+        tipo
+    ) {
 
         loginMessage.classList.add(
             tipo
         );
 
     }
+
+}
+
+
+function limparMensagem() {
+
+    loginMessage.textContent =
+        "";
+
+
+    loginMessage.className =
+        "login-message";
 
 }
